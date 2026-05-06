@@ -1,0 +1,27 @@
+# deployment/mosquitto/acl
+# Access Control List for VMS MQTT Topics
+
+# Admin user - full access
+user admin
+topic readwrite #
+
+# ESP32 Devices - publish only to specific topics
+user esp32_camera
+topic write jkuat/attendance/#
+topic write jkuat/system/heartbeat/#
+topic write jkuat/system/status/#
+
+user esp32_ble
+topic write jkuat/visitor/#
+topic write jkuat/system/heartbeat/#
+topic write jkuat/system/status/#
+
+# Backend Service - full access
+user ugenini
+topic readwrite #
+
+# Web Clients - read only specific topics
+user web_client
+topic read jkuat/attendance/#
+topic read jkuat/visitor/#
+topic read jkuat/system/status/#

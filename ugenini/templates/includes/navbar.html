@@ -1,0 +1,155 @@
+ {% load static %}
+ 
+ <!-- Sidebar Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo">
+                            <img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo">
+                        </span>
+                        <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+
+                <div class="menu-inner-shadow"></div>
+
+                <ul class="menu-inner py-1">
+                    <!-- Dashboard -->
+                    <li class="menu-item">
+                        <a href="{% url 'dashboard:home' %}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                            <div data-i18n="Analytics">Dashboard</div>
+                        </a>
+                    </li>
+                    
+                    <!-- Access Management -->
+                    <li class="menu-item active open">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-layout"></i>
+                            <div data-i18n="Layouts">Access</div>
+                        </a>
+                        <ul class="menu-sub" style="display: block;">
+                            <li class="menu-item active">
+                                <a href="{% url 'access:zone_list' %}" class="menu-link">
+                                    <div data-i18n="Without menu">Zones</div>
+                                </a>
+                            </li>
+                    
+                            <li class="menu-item">
+                                <a href="{% url 'access:permission_list' %}" class="menu-link">
+                                    <div data-i18n="Without navbar">Permissions</div>
+                                </a>
+                            </li>
+                            <li class="menu-item">
+                                <a href="{% url 'access:log_list' %}" class="menu-link">
+                                    <div data-i18n="Without navbar">Logs</div>
+                                </a>
+                            </li>
+                            <li class="menu-item">
+                                <a href="{% url 'access:geofence_list' %}" class="menu-link">
+                                    <div data-i18n="Container">Geofence</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Classroom -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-copy"></i>
+                            <div data-i18n="Extended UI">Classroom</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div>Roll Call</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div>Enrollment</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div>Sessions</div></a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Core -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-cube-alt"></i>
+                            <div data-i18n="Misc">Core</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div>College</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div>School</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div>Department</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div>Program</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div>Person</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div>Staff</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div>Students</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div>Units</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div>Class</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Devices -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-collection"></i>
+                            <div data-i18n="Extended UI">Devices</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div>Edge</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div>Monitor</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div>OTA</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div>Firmware</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- VMS -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-box"></i>
+                            <div data-i18n="Extended UI">VMS</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link"><div>Visitors</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link"><div>Check In</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:tag_list' %}" class="menu-link"><div>Tags</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:visitor_map' %}" class="menu-link"><div>Maps</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:session_list' %}" class="menu-link"><div>Sessions</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li class="menu-header small text-uppercase">
+                        <span class="menu-header-text">Settings</span>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-dock-top"></i>
+                            <div data-i18n="Account Settings">Configurations</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'settings:index' %}" class="menu-link"><div>General</div></a></li>
+                           
+                        </ul>  
+                    </li> 
+                </ul>
+            </aside>
+            <!-- / Sidebar -->
+
+            <script>
+                // Highlight active menu item based on current URL
+                
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+            </script>
+            

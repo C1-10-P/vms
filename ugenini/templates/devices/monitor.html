@@ -1,0 +1,821 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Device Monitor - Ugenini VMS</title>
+    <meta name="description" content="Real-time Device Monitoring Dashboard" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-online { 
+            color: #2e7d32;
+            background-color: rgba(46, 125, 50, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-offline { 
+            color: #c62828;
+            background-color: rgba(198, 40, 40, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-maintenance { 
+            color: #e65100;
+            background-color: rgba(230, 81, 0, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .device-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .device-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .device-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .indicator-online { background-color: #2e7d32; box-shadow: 0 0 4px #2e7d32; animation: pulse 2s infinite; }
+        .indicator-offline { background-color: #c62828; }
+        .indicator-maintenance { background-color: #e65100; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .metric-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+        }
+        .refresh-badge {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .refresh-badge:hover {
+            transform: rotate(180deg);
+        }
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-size: 0.9rem;
+        }
+        .capability-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            border-radius: 0.25rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .capability-true { background-color: #e8f5e9; color: #2e7d32; }
+        .capability-false { background-color: #eceff1; color: #90a4ae; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Sidebar Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo">
+                            <img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo">
+                        </span>
+                        <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+
+                <div class="menu-inner-shadow"></div>
+
+                <ul class="menu-inner py-1">
+                    <li class="menu-item">
+                        <a href="{% url 'dashboard:home' %}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                            <div>Dashboard</div>
+                        </a>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-layout"></i>
+                            <div>Access</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'access:zone_list' %}" class="menu-link"><div>Zones</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:permission_list' %}" class="menu-link"><div>Permissions</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:log_list' %}" class="menu-link"><div>Logs</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:geofence_list' %}" class="menu-link"><div>Geofence</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-copy"></i>
+                            <div>Classroom</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div>Roll Call</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div>Enrollment</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div>Sessions</div></a></li>
+                        </ul>
+                    </li>
+
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-cube-alt"></i>
+                            <div>Core</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div>Colleges</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div>Schools</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div>Departments</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div>Programs</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div>Persons</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div>Staff</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div>Students</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div>Units</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div>Classes</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="menu-item active open">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-collection"></i>
+                            <div>Devices</div>
+                        </a>
+                        <ul class="menu-sub" style="display: block;">
+                            <li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div>Edge Nodes</div></a></li>
+                            <li class="menu-item active"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div>Monitor</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div>OTA</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div>Firmware</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-box"></i>
+                            <div>VMS</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link"><div>Visitors</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link"><div>Check In</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <li class="menu-header small text-uppercase">
+                        <span class="menu-header-text">Settings</span>
+                    </li>
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-dock-top"></i>
+                            <div>Configurations</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'users:list' %}" class="menu-link"><div>Users</div></a></li>
+                            <li class="menu-item"><a href="{% url 'users:role_list' %}" class="menu-link"><div>Roles</div></a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </aside>
+            <!-- / Sidebar -->
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-trending-up fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Device Health Monitor</span>
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item me-3">
+                                <span class="badge bg-info" id="lastUpdateBadge">
+                                    <i class="bx bx-time me-1"></i> 
+                                    <span id="lastUpdateTime">Just now</span>
+                                </span>
+                            </li>
+                            <li class="nav-item me-3">
+                                <i class="bx bx-refresh refresh-badge fs-5" onclick="refreshData()" title="Refresh data"></i>
+                            </li>
+
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Online Devices</span>
+                                                <h3 class="mb-0 text-success" id="onlineCount">{{ online_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-success rounded p-3">
+                                                    <i class="bx bx-wifi bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Offline Devices</span>
+                                                <h3 class="mb-0 text-danger" id="offlineCount">{{ offline_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-danger rounded p-3">
+                                                    <i class="bx bx-wifi-off bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Critical Health</span>
+                                                <h3 class="mb-0 text-warning" id="criticalCount">{{ critical_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-warning rounded p-3">
+                                                    <i class="bx bx-error-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Avg Battery</span>
+                                                <h3 class="mb-0" id="avgBattery">{{ avg_battery|floatformat:0|default:"—" }}%</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-primary rounded p-3">
+                                                    <i class="bx bx-battery bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Row -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="metric-label">AVERAGE UPTIME</div>
+                                                <div class="metric-value" id="avgUptime">
+                                                    {% if avg_uptime %}
+                                                        {{ avg_uptime|floatformat:0 }} hrs
+                                                    {% else %}
+                                                        —
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <i class="bx bx-timer fs-1 text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="metric-label">TOTAL DEVICES</div>
+                                                <div class="metric-value">{{ nodes|length|default:0 }}</div>
+                                            </div>
+                                            <i class="bx bx-microchip fs-1 text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Device Grid -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Device Status Grid</h5>
+                                <small class="text-muted">Real-time status of all edge devices</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row" id="deviceGrid">
+                                    {% for node in nodes %}
+                                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                                        <div class="card device-card" onclick="showDeviceDetails({{ node.id }})">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div>
+                                                        <span class="{% if node.status == 'online' %}status-online{% elif node.status == 'offline' %}status-offline{% else %}status-maintenance{% endif %}">
+                                                            <span class="device-indicator indicator-{{ node.status }}"></span>
+                                                            {{ node.get_status_display }}
+                                                        </span>
+                                                    </div>
+                                                    {% if node.node_type == 'gateway' %}
+                                                    <i class="bx bx-router fs-3 text-secondary"></i>
+                                                    {% elif node.node_type == 'camera' %}
+                                                    <i class="bx bx-camera fs-3 text-secondary"></i>
+                                                    {% elif node.node_type == 'rfid_reader' %}
+                                                    <i class="bx bx-rfid fs-3 text-secondary"></i>
+                                                    {% elif node.node_type == 'ble_scanner' %}
+                                                    <i class="bx bx-bluetooth fs-3 text-secondary"></i>
+                                                    {% else %}
+                                                    <i class="bx bx-microchip fs-3 text-secondary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <h6 class="mb-1">{{ node.name|default:node.node_uuid|truncatechars:20 }}</h6>
+                                                <small class="text-muted d-block">{{ node.get_node_type_display }}</small>
+                                                <div class="mt-3">
+                                                    <div class="d-flex justify-content-between small mb-1">
+                                                        <span>Signal</span>
+                                                        <span>{{ node.wifi_rssi|default:"—" }} dBm</span>
+                                                    </div>
+                                                    <div class="progress mb-2" style="height: 4px;">
+                                                        <div class="progress-bar {% if node.wifi_rssi and node.wifi_rssi > -60 %}bg-success{% elif node.wifi_rssi and node.wifi_rssi > -80 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                             style="width: {% if node.wifi_rssi %}{% widthratio node.wifi_rssi|add:100 100 100 %}{% else %}0{% endif %}%"></div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between small">
+                                                        <span>Battery</span>
+                                                        <span>{{ node.battery_level|default:"—" }}%</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 4px;">
+                                                        <div class="progress-bar {% if node.battery_level and node.battery_level > 50 %}bg-success{% elif node.battery_level and node.battery_level > 20 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                             style="width: {{ node.battery_level|default:0 }}%"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 text-end">
+                                                    <small class="text-muted">
+                                                        Last seen: {% if node.last_heartbeat %}
+                                                        {{ node.last_heartbeat|timesince }} ago
+                                                        {% else %}
+                                                        Never
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12 text-center py-5">
+                                        <i class="bx bx-microchip bx-lg text-muted mb-3 d-block"></i>
+                                        <h6 class="text-muted">No edge devices found</h6>
+                                        <p class="text-muted small">Add edge nodes to monitor device status</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Detail Modal -->
+    <div class="modal fade" id="deviceDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-microchip me-2"></i>Device Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="deviceDetailContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" id="editDeviceLink" class="btn btn-primary">Edit Device</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            document.getElementById('lastUpdateTime').textContent = timeStr;
+        }
+        
+        function refreshData() {
+            $('#deviceGrid').html('<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(window.location.href + '?refresh=1', function(data) {
+                const html = $(data).find('#deviceGrid').html();
+                $('#deviceGrid').html(html);
+                
+                $.get('/devices/monitor/stats/', function(stats) {
+                    if (stats.online_count !== undefined) $('#onlineCount').text(stats.online_count);
+                    if (stats.offline_count !== undefined) $('#offlineCount').text(stats.offline_count);
+                    if (stats.critical_count !== undefined) $('#criticalCount').text(stats.critical_count);
+                    if (stats.avg_battery !== undefined) $('#avgBattery').text(Math.round(stats.avg_battery) + '%');
+                    if (stats.avg_uptime !== undefined) $('#avgUptime').text(Math.round(stats.avg_uptime) + ' hrs');
+                });
+                
+                updateLastUpdateTime();
+                toastr.success('Device data refreshed');
+            }).fail(function() {
+                $('#deviceGrid').html('<div class="col-12 text-center py-5"><p class="text-danger">Failed to load device data</p></div>');
+                toastr.error('Failed to refresh device data');
+            });
+        }
+        
+        function showDeviceDetails(nodeId) {
+            $('#deviceDetailModal').modal('show');
+            $('#deviceDetailContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/devices/nodes/${nodeId}/detail-json/`, function(node) {
+                const capabilities = [
+                    {name: 'Camera', value: node.has_camera},
+                    {name: 'BLE', value: node.has_ble},
+                    {name: 'RFID', value: node.has_rfid},
+                    {name: 'PIR Sensor', value: node.has_pir},
+                    {name: 'LED', value: node.has_led},
+                    {name: 'Buzzer', value: node.has_buzzer}
+                ];
+                
+                const html = `
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Device Overview</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Device Name</div>
+                                <div class="detail-value mb-2"><strong>${node.name || '—'}</strong></div>
+                                
+                                <div class="detail-label">Node UUID</div>
+                                <div class="detail-value mb-2"><code>${node.node_uuid || '—'}</code></div>
+                                
+                                <div class="detail-label">Node Type</div>
+                                <div class="detail-value mb-2">${node.node_type_display || node.node_type || '—'}</div>
+                                
+                                <div class="detail-label">Status</div>
+                                <div class="detail-value mb-2">
+                                    <span class="status-${node.status}">${node.status_display || node.status}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Model</div>
+                                <div class="detail-value mb-2">${node.model || '—'}</div>
+                                
+                                <div class="detail-label">Serial Number</div>
+                                <div class="detail-value mb-2">${node.serial_number || '—'}</div>
+                                
+                                <div class="detail-label">Hardware Version</div>
+                                <div class="detail-value mb-2">${node.hardware_version || '—'}</div>
+                                
+                                <div class="detail-label">Firmware Version</div>
+                                <div class="detail-value mb-2">${node.firmware_version || '—'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Network Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">IP Address</div>
+                                <div class="detail-value mb-2">${node.ip_address || '—'}</div>
+                                
+                                <div class="detail-label">MAC Address</div>
+                                <div class="detail-value mb-2">${node.mac_address || '—'}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">WiFi SSID</div>
+                                <div class="detail-value mb-2">${node.wifi_ssid || '—'}</div>
+                                
+                                <div class="detail-label">WiFi RSSI</div>
+                                <div class="detail-value mb-2">${node.wifi_rssi ? node.wifi_rssi + ' dBm' : '—'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Location</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Institution</div>
+                                <div class="detail-value mb-2">${node.institution_name || '—'}</div>
+                                
+                                <div class="detail-label">College</div>
+                                <div class="detail-value mb-2">${node.college_name || '—'}</div>
+                                
+                                <div class="detail-label">School</div>
+                                <div class="detail-value mb-2">${node.school_name || '—'}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Department</div>
+                                <div class="detail-value mb-2">${node.department_name || '—'}</div>
+                                
+                                <div class="detail-label">Zone</div>
+                                <div class="detail-value mb-2">${node.zone_name || '—'}</div>
+                                
+                                <div class="detail-label">Location Description</div>
+                                <div class="detail-value mb-2">${node.location_description || '—'}</div>
+                            </div>
+                        </div>
+                        ${node.latitude && node.longitude ? `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Latitude</div>
+                                <div class="detail-value mb-2">${node.latitude}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Longitude</div>
+                                <div class="detail-value mb-2">${node.longitude}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Power & Performance</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Power Source</div>
+                                <div class="detail-value mb-2">${node.power_source_display || node.power_source || '—'}</div>
+                                
+                                <div class="detail-label">Battery Level</div>
+                                <div class="detail-value mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">${node.battery_level || '—'}%</span>
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar ${node.battery_level > 50 ? 'bg-success' : node.battery_level > 20 ? 'bg-warning' : 'bg-danger'}" 
+                                                 style="width: ${node.battery_level || 0}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-label">Battery Voltage</div>
+                                <div class="detail-value mb-2">${node.battery_voltage ? node.battery_voltage + 'V' : '—'}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">CPU Usage</div>
+                                <div class="detail-value mb-2">${node.cpu_usage ? node.cpu_usage + '%' : '—'}</div>
+                                
+                                <div class="detail-label">Temperature</div>
+                                <div class="detail-value mb-2">${node.temperature ? node.temperature + '°C' : '—'}</div>
+                                
+                                <div class="detail-label">Uptime</div>
+                                <div class="detail-value mb-2">${formatUptime(node.uptime_seconds)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Capabilities</h6>
+                        <div class="mb-2">
+                            ${capabilities.map(cap => `
+                                <span class="capability-badge capability-${cap.value}">
+                                    <i class="bx bx-${cap.value ? 'check' : 'x'}-circle me-1"></i>
+                                    ${cap.name}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Statistics</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-label">Total Events</div>
+                                <div class="detail-value mb-2">${node.total_events || 0}</div>
+                                
+                                <div class="detail-label">Total Errors</div>
+                                <div class="detail-value mb-2">${node.total_errors || 0}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-label">Last Heartbeat</div>
+                                <div class="detail-value mb-2">${node.last_heartbeat ? new Date(node.last_heartbeat).toLocaleString() : 'Never'}</div>
+                                
+                                <div class="detail-label">Last Event Time</div>
+                                <div class="detail-value mb-2">${node.last_event_time ? new Date(node.last_event_time).toLocaleString() : 'Never'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h6 class="border-bottom pb-2 mb-3">Configuration</h6>
+                        <div class="detail-label">Config Version</div>
+                        <div class="detail-value mb-2">${node.config_version || '1.0.0'}</div>
+                        <div class="detail-label">Configuration</div>
+                        <pre class="bg-light p-2 rounded small" style="max-height: 150px; overflow: auto;">${JSON.stringify(node.config || {}, null, 2)}</pre>
+                    </div>
+                `;
+                
+                $('#deviceDetailContent').html(html);
+                $('#editDeviceLink').attr('href', `/devices/nodes/${node.id}/edit/`);
+            }).fail(function() {
+                $('#deviceDetailContent').html('<div class="alert alert-danger m-3">Failed to load device details.</div>');
+            });
+        }
+        
+        function formatUptime(seconds) {
+            if (!seconds) return '—';
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+        
+        updateLastUpdateTime();
+        
+        // Auto-refresh every 30 seconds
+        let refreshInterval = setInterval(refreshData, 30000);
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearInterval(refreshInterval);
+            } else {
+                refreshInterval = setInterval(refreshData, 30000);
+                refreshData();
+            }
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

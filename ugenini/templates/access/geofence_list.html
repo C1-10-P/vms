@@ -1,0 +1,984 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Geofences - Ugenini VMS</title>
+    <meta name="description" content="Manage Geofence Boundaries" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Leaflet Draw for drawing geofences -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .boundary-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .boundary-polygon { background-color: #e8f5e9; color: #2e7d32; }
+        .boundary-circle { background-color: #e3f2fd; color: #1565c0; }
+        .boundary-point { background-color: #fff3e0; color: #e65100; }
+        .boundary-path { background-color: #f3e5f5; color: #6a1b9a; }
+        .map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 0.5rem;
+            z-index: 1;
+        }
+        .map-container-sm {
+            height: 300px;
+        }
+        .coordinate-input {
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .geofence-preview {
+            border: 2px solid #696cff;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search geofences..." id="tableSearch" />
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <!-- User Dropdown -->
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Total Geofences</span>
+                                                <h3 class="mb-0">{{ total_geofences|default:page_obj.paginator.count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-primary rounded p-3">
+                                                    <i class="bx bx-map bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Polygon</span>
+                                                <h3 class="mb-0 text-success">{{ polygon_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-success rounded p-3">
+                                                    <i class="bx bx-polygon bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Circle/Radius</span>
+                                                <h3 class="mb-0 text-info">{{ circle_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-info rounded p-3">
+                                                    <i class="bx bx-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Zones Protected</span>
+                                                <h3 class="mb-0">{{ zones_protected|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-warning rounded p-3">
+                                                    <i class="bx bx-shield bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Geofences Table Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h5 class="card-title mb-0">Geofence Boundaries</h5>
+                                    <small class="text-muted">Manage virtual boundaries for zones</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <!-- Export Dropdown -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bx bx-download me-1"></i> Export
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#" id="exportExcelBtn">
+                                                <i class="bx bx-file me-1"></i> Export to Excel
+                                            </a>
+                                            <a class="dropdown-item" href="#" id="exportCSVBtn">
+                                                <i class="bx bx-file-blank me-1"></i> Export to CSV
+                                            </a>
+                                            <a class="dropdown-item" href="#" id="exportGeoJSONBtn">
+                                                <i class="bx bx-map me-1"></i> Export to GeoJSON
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#" id="printTableBtn">
+                                                <i class="bx bx-printer me-1"></i> Print
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Add Geofence Button -->
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGeofenceModal">
+                                        <i class="bx bx-plus me-1"></i> Add Geofence
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters Row -->
+                            <div class="card-body border-bottom">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted small">Zone</label>
+                                        <select class="form-select" id="filterZone">
+                                            <option value="">All Zones</option>
+                                            {% for zone in zones %}
+                                            <option value="{{ zone.id }}">{{ zone.name }} ({{ zone.get_zone_type_display }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Boundary Type</label>
+                                        <select class="form-select" id="filterBoundaryType">
+                                            <option value="">All Types</option>
+                                            <option value="polygon">Polygon</option>
+                                            <option value="circle">Circle</option>
+                                            <option value="point">Point</option>
+                                            <option value="path">Path/Route</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Status</label>
+                                        <select class="form-select" id="filterStatus">
+                                            <option value="all">All</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button class="btn btn-secondary w-100" id="clearFiltersBtn">
+                                            <i class="bx bx-reset"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Geofences Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="geofencesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Zone</th>
+                                            <th>Boundary Type</th>
+                                            <th>Coordinates</th>
+                                            <th>Radius/Area</th>
+                                            <th>Accuracy</th>
+                                            <th>Status</th>
+                                            <th>Last Updated</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for geofence in geofences %}
+                                        <tr data-geofence-id="{{ geofence.id }}">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-building me-2 text-primary"></i>
+                                                    <div>
+                                                        <strong>{{ geofence.zone.name }}</strong>
+                                                        {% if geofence.zone.code %}
+                                                        <br><small class="text-muted">{{ geofence.zone.code }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="boundary-badge boundary-{{ geofence.boundary_type }}">
+                                                    <i class="bx {% if geofence.boundary_type == 'polygon' %}bx-polygon{% elif geofence.boundary_type == 'circle' %}bx-circle{% elif geofence.boundary_type == 'point' %}bx-target{% else %}bx-map{% endif %} me-1"></i>
+                                                    {{ geofence.get_boundary_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="coordinate-input">
+                                                    {% if geofence.boundary_type == 'polygon' %}
+                                                        {{ geofence.coordinates|length }} points
+                                                    {% elif geofence.boundary_type == 'circle' %}
+                                                        Center: {{ geofence.latitude|floatformat:4 }}, {{ geofence.longitude|floatformat:4 }}
+                                                    {% elif geofence.boundary_type == 'point' %}
+                                                        {{ geofence.latitude|floatformat:4 }}, {{ geofence.longitude|floatformat:4 }}
+                                                    {% else %}
+                                                        {{ geofence.coordinates|length }} waypoints
+                                                    {% endif %}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if geofence.radius_meters %}
+                                                <span class="badge bg-label-info">{{ geofence.radius_meters }}m radius</span>
+                                                {% elif geofence.boundary_type == 'polygon' %}
+                                                <span class="badge bg-label-secondary">Area boundary</span>
+                                                {% else %}
+                                                <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-label-secondary">{{ geofence.accuracy_threshold }}m</span>
+                                            </td>
+                                            <td>
+                                                {% if geofence.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small>{{ geofence.updated_at|date:"Y-m-d H:i"|default:"—" }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewGeofence({{ geofence.id }})">
+                                                            <i class="bx bx-show-alt me-1"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editGeofence({{ geofence.id }})">
+                                                            <i class="bx bx-edit-alt me-1"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="toggleGeofenceStatus({{ geofence.id }})">
+                                                            <i class="bx bx-power-off me-1"></i> 
+                                                            {% if geofence.is_active %}Deactivate{% else %}Activate{% endif %}
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="exportGeofenceGeoJSON({{ geofence.id }})">
+                                                            <i class="bx bx-map me-1"></i> Export GeoJSON
+                                                        </a>
+                                                        {% if geofence.latitude and geofence.longitude %}
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="showOnMap({{ geofence.id }}, {{ geofence.latitude }}, {{ geofence.longitude }})">
+                                                            <i class="bx bx-map-pin me-1"></i> Show on Map
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5">
+                                                <i class="bx bx-map bx-lg text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted">No geofences found</h6>
+                                                <p class="text-muted small">Click "Add Geofence" to create virtual boundaries</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="bx bx-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                Next <i class="bx bx-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODALS -->
+    <!-- ============================================ -->
+
+    <!-- Add Geofence Modal (Backdrop Modal - Static) -->
+    <div class="modal fade" id="addGeofenceModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addGeofenceForm" method="POST" action="{% url 'access:geofence_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add Geofence Boundary</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required">Zone</label>
+                                <select name="zone" class="form-select" required>
+                                    <option value="">Select Zone</option>
+                                    {% for zone in zones %}
+                                    <option value="{{ zone.id }}">{{ zone.name }} ({{ zone.get_zone_type_display }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required">Boundary Type</label>
+                                <select name="boundary_type" class="form-select" id="boundaryTypeSelect" required>
+                                    <option value="polygon">Polygon (Area)</option>
+                                    <option value="circle">Circle (Radius)</option>
+                                    <option value="point">Point (Single Location)</option>
+                                    <option value="path">Path/Route</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Dynamic fields based on boundary type -->
+                            <div class="col-12" id="polygonFields" style="display: none;">
+                                <label class="form-label">Polygon Coordinates</label>
+                                <div class="geofence-preview">
+                                    <div id="polygonMap" class="map-container"></div>
+                                </div>
+                                <textarea name="coordinates" class="form-control mt-2 coordinate-input" rows="3" placeholder="[[lat,lng], [lat,lng], ...]"></textarea>
+                                <small class="text-muted">Click on the map to draw polygon. Click the draw toolbar to start drawing.</small>
+                            </div>
+                            
+                            <div class="col-12" id="circleFields" style="display: none;">
+                                <label class="form-label">Circle Center & Radius</label>
+                                <div class="geofence-preview">
+                                    <div id="circleMap" class="map-container"></div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Latitude</label>
+                                        <input type="number" step="any" name="latitude" class="form-control" placeholder="-1.9441">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Longitude</label>
+                                        <input type="number" step="any" name="longitude" class="form-control" placeholder="30.0619">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Radius (meters)</label>
+                                        <input type="number" name="radius_meters" class="form-control" placeholder="100">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Accuracy Threshold (meters)</label>
+                                <input type="number" name="accuracy_threshold" class="form-control" value="10">
+                                <small class="text-muted">GPS accuracy required for geofence validation</small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="is_active" class="form-check-input" checked>
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Geofence</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Geofence Modal (Scrollable Modal with Map) -->
+    <div class="modal fade" id="viewGeofenceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-map-pin me-2"></i>Geofence Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewGeofenceContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="exportGeofenceBtn" onclick="exportCurrentGeoJSON()">
+                        <i class="bx bx-map me-1"></i> Export GeoJSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Geofence Modal -->
+    <div class="modal fade" id="editGeofenceModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit me-2"></i>Edit Geofence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editGeofenceContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Show messages
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        // Initialize DataTable
+        let dataTable;
+        $(document).ready(function() {
+            dataTable = $('#geofencesTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[0, 'asc']],
+                language: { emptyTable: "No geofences found" }
+            });
+            
+            // Initialize Select2
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#addGeofenceModal')
+            });
+            
+            // Boundary type toggle
+            $('#boundaryTypeSelect').on('change', function() {
+                const type = $(this).val();
+                $('#polygonFields, #circleFields').hide();
+                if (type === 'polygon') $('#polygonFields').show();
+                else if (type === 'circle') $('#circleFields').show();
+            });
+            
+            // Initialize drawing maps when modal opens
+            $('#addGeofenceModal').on('shown.bs.modal', function() {
+                initPolygonMap();
+                initCircleMap();
+            });
+        });
+        
+        // Search functionality
+        $('#tableSearch').on('keyup', function() {
+            dataTable.search(this.value).draw();
+        });
+        
+        // Filter functionality
+        function applyFilters() {
+            const zoneId = $('#filterZone').val();
+            const boundaryType = $('#filterBoundaryType').val();
+            const status = $('#filterStatus').val();
+            
+            let url = new URL(window.location.href);
+            if (zoneId) url.searchParams.set('zone_id', zoneId);
+            else url.searchParams.delete('zone_id');
+            if (boundaryType) url.searchParams.set('boundary_type', boundaryType);
+            else url.searchParams.delete('boundary_type');
+            if (status === 'active') url.searchParams.set('status', 'active');
+            else if (status === 'inactive') url.searchParams.set('status', 'inactive');
+            else url.searchParams.delete('status');
+            
+            window.location.href = url.toString();
+        }
+        
+        $('#filterZone, #filterBoundaryType, #filterStatus').on('change', applyFilters);
+        
+        $('#clearFiltersBtn').on('click', function() {
+            window.location.href = window.location.pathname;
+        });
+        
+        // Export functions
+        $('#exportExcelBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-excel').trigger();
+        });
+        
+        $('#exportCSVBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-csv').trigger();
+        });
+        
+        $('#printTableBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-print').trigger();
+        });
+        
+        $('#exportGeoJSONBtn').on('click', function(e) {
+            e.preventDefault();
+            exportAllGeoJSON();
+        });
+        
+        // Add buttons
+        new $.fn.dataTable.Buttons(dataTable, {
+            buttons: [
+                { extend: 'excel', text: 'Excel', filename: 'geofences_export' },
+                { extend: 'csv', text: 'CSV', filename: 'geofences_export' },
+                { extend: 'print', text: 'Print', title: 'Geofence Boundaries Report' }
+            ]
+        });
+        
+        // Map initialization for polygon drawing
+        let polygonMap, drawnItems, drawControl;
+        
+        function initPolygonMap() {
+            if (polygonMap) polygonMap.remove();
+            
+            polygonMap = L.map('polygonMap').setView([-1.9441, 30.0619], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+            }).addTo(polygonMap);
+            
+            drawnItems = L.featureGroup().addTo(polygonMap);
+            
+            drawControl = new L.Control.Draw({
+                edit: { featureGroup: drawnItems },
+                draw: {
+                    polygon: { allowIntersection: false, showArea: true },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                }
+            });
+            polygonMap.addControl(drawControl);
+            
+            polygonMap.on(L.Draw.Event.CREATED, function(e) {
+                const layer = e.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
+                
+                const coordinates = layer.getLatLngs()[0].map(function(latlng) {
+                    return [latlng.lat, latlng.lng];
+                });
+                $('textarea[name="coordinates"]').val(JSON.stringify(coordinates));
+            });
+        }
+        
+        function initCircleMap() {
+            // Implementation for circle map
+        }
+        
+        // Geofence CRUD Functions
+        let currentGeofenceId = null;
+        
+        function viewGeofence(geofenceId) {
+            currentGeofenceId = geofenceId;
+            $('#viewGeofenceModal').modal('show');
+            $('#viewGeofenceContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/geofences/${geofenceId}/detail/`, function(data) {
+                $('#viewGeofenceContent').html(data);
+            }).fail(function() {
+                $('#viewGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load geofence details.</div>');
+            });
+        }
+        
+        function editGeofence(geofenceId) {
+            $('#editGeofenceModal').modal('show');
+            $('#editGeofenceContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/geofences/${geofenceId}/edit/`, function(data) {
+                $('#editGeofenceContent').html(data);
+            }).fail(function() {
+                $('#editGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+            });
+        }
+        
+        function toggleGeofenceStatus(geofenceId) {
+            if (confirm('Are you sure you want to toggle this geofence?')) {
+                $.post(`/access/geofences/${geofenceId}/toggle-status/`, {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success('Geofence status updated');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.error || 'Failed to update');
+                    }
+                })
+                .fail(function() {
+                    toastr.error('An error occurred');
+                });
+            }
+        }
+        
+        function exportGeoJSON(geofenceId) {
+            window.location.href = `/access/geofences/${geofenceId}/export-geojson/`;
+        }
+        
+        function exportCurrentGeoJSON() {
+            if (currentGeofenceId) {
+                exportGeoJSON(currentGeofenceId);
+            }
+        }
+        
+        function exportAllGeoJSON() {
+            window.location.href = '/access/geofences/export-all-geojson/';
+        }
+        
+        // Handle Add Geofence Form Submission
+        $('#addGeofenceForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
+            
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Creating...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addGeofenceModal').modal('hide');
+                        toastr.success('Geofence created successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        toastr.error(response.error || 'Failed to create geofence');
+                        submitBtn.prop('disabled', false).html('Create Geofence');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'An error occurred';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    toastr.error(errorMsg);
+                    submitBtn.prop('disabled', false).html('Create Geofence');
+                }
+            });
+        });
+        
+        // Active menu item
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-sub .menu-item').forEach(item => item.classList.remove('active'));
+            
+            const menuLinks = document.querySelectorAll('.menu-link');
+            menuLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);') {
+                    if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) {
+                        const menuItem = link.closest('.menu-item');
+                        if (menuItem) menuItem.classList.add('active');
+                        
+                        const parentSub = link.closest('.menu-sub');
+                        if (parentSub) {
+                            const parentMenuItem = parentSub.closest('.menu-item');
+                            if (parentMenuItem) {
+                                parentMenuItem.classList.add('active');
+                                const parentSubMenu = parentMenuItem.querySelector('.menu-sub');
+                                if (parentSubMenu) parentSubMenu.style.display = 'block';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+
+        // ============================================
+        // VIEW GEOFENCE (Modal, no redirect)
+        // ============================================
+        function viewGeofence(geofenceId) {
+            $('#viewGeofenceModal').modal('show');
+            $('#viewGeofenceContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/geofences/${geofenceId}/detail/`, function(response) {
+                if (response.success) {
+                    $('#viewGeofenceContent').html(response.html);
+                } else {
+                    $('#viewGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load geofence details.</div>');
+                }
+            }).fail(function() {
+                $('#viewGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load geofence details.</div>');
+            });
+        }
+
+        // ============================================
+        // EDIT GEOFENCE (Load form via AJAX, submit via AJAX)
+        // ============================================
+        function editGeofence(geofenceId) {
+            $('#editGeofenceModal').modal('show');
+            $('#editGeofenceContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/geofences/${geofenceId}/edit-form/`, function(response) {
+                if (response.success) {
+                    $('#editGeofenceContent').html(response.html);
+                } else {
+                    $('#editGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+                }
+            }).fail(function() {
+                $('#editGeofenceContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+            });
+        }
+
+        // ============================================
+        // TOGGLE GEOFENCE STATUS (AJAX)
+        // ============================================
+        function toggleGeofenceStatus(geofenceId) {
+            if (confirm('Are you sure you want to toggle this geofence\'s status?')) {
+                $.post(`/access/geofences/${geofenceId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Geofence status updated');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.error || 'Failed to update');
+                    }
+                })
+                .fail(function() {
+                    toastr.error('An error occurred');
+                });
+            }
+        }
+
+        // ============================================
+        // EXPORT GEOFENCE AS GEOJSON
+        // ============================================
+        function exportGeofenceGeoJSON(geofenceId) {
+            window.location.href = `/access/geofences/${geofenceId}/export-geojson/`;
+        }
+
+        // ============================================
+        // SHOW ON MAP (Bonus function)
+        // ============================================
+        function showOnMap(geofenceId, lat, lng) {
+            if (lat && lng) {
+                // Switch to map view if available
+                window.location.href = `/access/zone-map/?focus=geofence&id=${geofenceId}&lat=${lat}&lng=${lng}`;
+            } else {
+                window.location.href = `/access/zone-map/?focus=geofence&id=${geofenceId}`;
+            }
+        }
+    </script>
+</body>
+</html>

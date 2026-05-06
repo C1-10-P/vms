@@ -1,0 +1,594 @@
+vms_project/                                    # Project root directory
+│
+├── 📁 apps/                                    # All Django applications
+│   ├── 📁 core/
+│   │   ├── __init__.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   ├── admin.py
+│   │   ├── urls.py
+│   │   ├── seed.py                            # ✅ Core seed data
+│   │   ├── 📁 management/                     # Django management commands
+│   │   │   └── 📁 commands/
+│   │   │       └── seed_db.py                 # ✅ Django management command
+│   │   └── ...
+│   │
+│   ├── 📁 attendance/
+│   │   ├── seed.py                            # ✅ Attendance seed data
+│   │   └── ...
+│   │
+│   ├── 📁 visitors/
+│   │   ├── seed.py                            # ✅ Visitors seed data
+│   │   └── ...
+│   │
+│   ├── 📁 access/
+│   │   ├── seed.py                            # ✅ Access seed data
+│   │   └── ...
+│   │
+│   ├── 📁 devices/
+│   │   ├── seed.py                            # ✅ Devices seed data
+│   │   └── ...
+│   │
+│   └── ...
+│
+├── 📁 scripts/                                 # ✅ Utility scripts directory (create this)
+│   ├── __init__.py
+│   ├── seed_database.py                       # ✅ Main seed orchestrator
+│   ├── backup_db.py
+│   ├── monitor.py
+│   └── generate_test_data.py
+│
+├── 📁 backend/                                 # Backend files
+│   └── ...
+│
+├── 📁 frontend/                                # Frontend files
+│   └── ...
+│
+├── 📁 static/                              # static assets
+│   └── ...
+│
+├── 📁 documentation/                           # Documentation files
+│   └── ...
+│
+├── 📁 templates/                               # html files for repective apps
+│   └── ...
+│
+├── manage.py                                   # Django management script
+├── requirements.txt
+├── .env
+└── README.md
+
+# Database Configuration
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'vms',
+        'USER': 'postgres',
+        'PASSWORD': 'qjbaoye23',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
+    }
+}
+
+## Testing
+
+python manage.py test apps.vms --verbosity=2
+python manage.py test apps.core --verbosity=2
+python manage.py test apps.classroom --verbosity=2
+python manage.py test apps.api --verbosity=2
+
+Detailed report is available at htmlcov/index.html
+
+## Usage
+
+Run migrations first for all tables to be added on the db
+python manage.py makemigrations
+python manage.py migrate
+
+Create Super User
+python manage.py createsuperuser
+//eg admin@admin.com then access http://127.0.0.1:8000/admin to create Roles(Groups) and Permissions for your system users after running the server
+python manage.py runserver
+
+Adding Test Data
+
+Seed database
+python manage.py seed_db
+python manage.py seed_db --action seed
+
+Clean database
+python manage.py seed_db --action clean
+
+Reset database (clean then seed)
+python manage.py seed_db --action reset
+
+## API
+
+1. Login
+
+curl -X POST http://localhost:8000/api/v1/auth/login/ -H "Content-Type: application/json" -d '{"username":"user","password":"password"}
+
+{
+"refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NjExNjkxOCwiaWF0IjoxNzc2MDMwNTE4LCJqdGkiOiJjOTMwN2Y5N2M4MDI0M2E3YmZiYTdkNjM0M2Y1MzEwMiIsInVzZXJfaWQiOiIyNiJ9.AJhJFX-Dku8auPL-OgZrYreQGLNLTR8Nxcnfiz0RRMo",
+"access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k",
+"user":{"id":26,"username":"user","email":"<user@vms.com>","first_name":"","last_name":"","is_staff":true,"is_superuser":true,
+"permissions":["can_export_attendance","can_edit_attendance","can_schedule_reports","can_view_reports","can_manage_users","can_view_attendance","can_verify_attendance","can_export_reports","can_reboot_devices","can_blacklist_visitor","can_override_access","can_delete_visitor","can_verify_2fa","can_create_visitor","can_manage_devices","can_view_system_health","can_delete_attendance","can_checkin_visitor","can_view_visitors","can_backup_system","can_manage_permissions","can_edit_visitor","can_view_zones","can_view_system_logs","can_track_visitor","can_view_access_logs","can_configure_devices","can_checkout_visitor","can_manage_zones","can_create_attendance","can_update_firmware","can_generate_reports","can_view_devices"],
+"role":"super_admin"
+}
+}
+
+2. Get current user (use token from login response)
+
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiw
+iZXhwIjoxNzc2MDgzNDM5LCJpYXQiOjE3NzYwNzk4MzksImp0aSI6ImQ2ZDY5OWM3YjdiZjRhYTU4MDU1YjQyNGFiNjA3
+ZDhlIiwidXNlcl9pZCI6IjI2In0.fcPt4ZXdlp39Mej_uq-oGl9Me2jIEb9-nkanDMPKBHM" http://localhost:8000/api/v1/auth/me/
+
+{"id":26,"username":"user","email":"user@vms.com","first_name":"","last_name":"","full_name":"user","is_active":true,"is_staff":true,"is_superuser":true,"last_login":"2026-04-12T21:14:40.899964Z","date_joined":"2026-04-12T21:10:14.683516Z","permissions":["can_backup_system","can_track_visitor","can_export_reports","can_manage_zones","can_reboot_devices","can_manage_devices","can_delete_visitor","can_view_visitors","can_blacklist_visitor","can_schedule_reports","can_override_access","can_view_system_logs","can_view_access_logs","can_create_attendance","can_delete_attendance","can_checkin_visitor","can_view_devices","can_view_attendance","can_view_system_health","can_view_zones","can_edit_attendance","can_verify_attendance","can_manage_permissions","can_create_visitor","can_generate_reports","can_checkout_visitor","can_edit_visitor","can_view_reports","can_update_firmware","can_configure_devices","can_verify_2fa","can_manage_users","can_export_attendance"],"role":"super_admin","person_info":null}
+
+
+1. List attendance records
+
+curl -X GET "http://localhost:8000/api/v1/attendance/?limit=10" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k"
+
+  {
+  "count": 25,
+  "next": "<http://localhost:8000/api/v1/attendance/?page=2>",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "student_name": "John Doe",
+      "student_reg": "REG001",
+      "class_code": "TIE4101",
+      "scan_time": "2024-01-15T09:30:00Z",
+      "verification_status": "success"
+    }
+  ]
+}
+
+1. Get attendance summary
+
+curl -X GET "http://localhost:8000/api/v1/attendance/summary/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k"
+
+1. List visitors
+
+curl -X GET "http://localhost:8000/api/v1/visitors/?status=active" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k"
+
+  {
+  "active_visitors": [
+    {
+      "id": 1,
+      "name": "Jane Smith",
+      "check_in_time": "2024-01-15T08:00:00Z",
+      "last_location": "Main Gate",
+      "tag_id": "TAG001"
+    }
+  ]
+}
+
+1. List access zones
+
+curl -X GET "<http://localhost:8000/api/v1/zones/>" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+1. List devices
+
+curl -X GET "http://localhost:8000/api/v1/devices/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k"
+
+1. Get device health
+
+curl -X GET "http://localhost:8000/api/v1/devices/health/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2MDc3NzU5LCJpYXQiOjE3NzYwNzQxNTksImp0aSI6IjEzYzc3Y2E5ZGJhYzQ3NGE4ZTcxNjhhYjg5MzZhZThhIiwidXNlcl9pZCI6IjI2In0.REWOBLYe5BW6jZeK0eGNm-VRGwNxkO4QZCTDX7kpR5k"
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         API ENDPOINT RELATIONSHIPS                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐                                                            │
+│  │   /auth/    │──▶Returns JWT token used for ALL other endpoints          │
+│  └─────────────┘                                                            │
+│         │                                                                   │
+│         ▼                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                         AUTHENTICATED ENDPOINTS                       │  │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│  ┌─────────────┐      ┌─────────────┐      ┌─────────────┐                  │
+│  │  /users/    │      │ /attendance/│      │ /visitors/  │                  │
+│  │             │      │             │      │             │                  │
+│  │ Lists all   │      │ Requires    │      │ Requires    │                  │
+│  │ system users│      │ student_id  │      │ person data │                  │
+│  │ who can     │      │ from Person │      │ from Person │                  │
+│  │ access API  │      │ model       │      │ model       │                  │
+│  └─────────────┘      └─────────────┘      └─────────────┘                  │
+│                              │                    │                         │
+│                              ▼                    ▼                         │
+│                       ┌─────────────┐      ┌─────────────┐                  │
+│                       │  /zones/    │      │ /devices/   │                  │
+│                       │             │      │             │                  │
+│                       │ Tracks where│      │ Manages     │                  │
+│                       │ visitors go │      │ ESP32 nodes │                  │
+│                       └─────────────┘      └─────────────┘                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+Request URL
+http://127.0.0.1:8000/api/v1   
+{
+  "student": 1024,
+  "class_obj": 55,
+  "node": 12,
+  "scan_time": "2026-04-13T13:02:46.246Z",
+  "verification_method": "rfid",
+  "verification_status": "success",
+  "confidence_score": "1.0",
+  "latitude": "-1.0912",
+  "longitude": "37.0117",
+  "ip_address": "192.168.1.15",
+  "user_agent": "Mozilla/5.0 (IoT Gateway; ARMv7) WebKit/537.36",
+  "raw_data": {
+    "card_uid": "E28068940000",
+    "antenna_id": 1,
+    "dbm": -58
+  },
+  "remarks": "Regular check-in at Lecture Hall 4",
+  "recorded_by": 1
+}
+
+# 4. Check specific endpoints
+curl -X GET "http://localhost:8000/api/v1/visitors/" -H "Authorization: Bearer YOUR_TOKEN"
+curl -X GET "http://localhost:8000/api/v1/zones/" -H "Authorization: Bearer YOUR_TOKEN"
+
+# Step 1: Create session
+curl -X POST http://localhost:8000/api/v1/attendance/session/create/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_reg": "ENE221-0108/2018",
+    "class_code": "TIE4101",
+    "scan_method": "qr",
+    "scan_device": "CAM-001"
+  }'
+
+# Response:
+{
+  "success": true,
+  "session_id": "abc123-def456-...",
+  "expires_at": "2024-01-15T10:05:00Z",
+  "message": "Session created. Please validate within 5 minutes."
+}
+
+# Step 2: Validate session
+curl -X POST http://localhost:8000/api/v1/attendance/session/abc123-def456-.../validate/ \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Response:
+{
+  "success": true,
+  "attendance_id": 123,
+  "student_name": "John Doe",
+  "class_code": "TIE4101"
+}
+
+# Step 1: Create session with extracted OCR data
+curl -X POST http://localhost:8000/api/v1/visitor/session/create/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "extracted_data": {
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "id_number": "12345678",
+      "phone_number": "+254712345678"
+    },
+    "scan_device": "CAM-002"
+  }'
+
+# Response:
+{
+  "success": true,
+  "session_id": "xyz789-...",
+  "expires_at": "2024-01-15T10:10:00Z",
+  "existing_visitor": false,
+  "message": "Session created. Please complete visitor information."
+}
+
+# Step 2: Complete check-in
+curl -X POST http://localhost:8000/api/v1/visitor/session/xyz789-.../complete/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "additional_info": {
+      "email": "jane@example.com",
+      "organization": "ABC Corp",
+      "purpose": "meeting"
+    }
+  }'
+
+# Response:
+{
+  "success": true,
+  "visitor_id": 45,
+  "visit_id": 67,
+  "visitor_name": "Jane Smith",
+  "message": "Visitor checked in successfully"
+}
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        CAMERA INTEGRATION ARCHITECTURE                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────────────────┐    ┌──────────────────────────────┐       │
+│  │     Raspberry Pi Camera      │    │        ESP32-CAM             │       │
+│  │     (USB or CSI)             │    │     (Standalone Scanner)     │       │
+│  │                              │    │                              │       │
+│  │  • Classroom entrance        │    │  • Gate entry points         │       │
+│  │  • Lab access points         │    │  • Visitor check-in kiosks   │       │
+│  │  • Security checkpoints      │    │  • Remote locations          │       │
+│  └──────────────┬───────────────┘    └──────────────┬───────────────┘       │
+│                 │                                   │                       │
+│                 │ (USB/CSI)                         │ (WiFi + MQTT)         │
+│                 ▼                                   ▼                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                         Raspberry Pi 4                              │    │
+│  │  ┌────────────────────────────────────────────────────────────────┐ │    │
+│  │  │                    Django Backend                              │ │    │
+│  │  │  • OpenCV for image processing                                 │ │    │
+│  │  │  • Face recognition                                            │ │    │
+│  │  │  • QR/Barcode decoding                                         │ │    │
+│  │  │  • MQTT message processing                                     │ │    │
+│  │  └────────────────────────────────────────────────────────────────┘ │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         COMPLETE OCR PIPELINE WITH RASPBERRY PI                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐│
+│  │                         RASPBERRY PI (Edge Device)                           │
+│  │                                                                              │
+│  │  1. Camera captures ID image                                                 │
+│  │  2. OpenCV preprocesses image (grayscale, denoise, threshold)               ││
+│  │  3. OCR engine extracts text                                                ││
+│  │  4. Regex patterns extract ID fields                                        ││
+│  │  5. Data sent to Django API or processed locally                            ││
+│  │                                                                              │
+│  └─────────────────────────────────────────────────────────────────────────────┘│
+│                                         │                                       │
+│                                         │ (HTTP/API)                            │
+│                                         ▼                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐│
+│  │                         DJANGO BACKEND (Same Pi or Separate)                 │
+│  │                                                                              │
+│  │  6. Validate extracted data against database                                 │
+│  │  7. Record attendance / Check in visitor                                     │
+│  │  8. Bind BLE tag to visitor                                                  │
+│  │  9. Return success/failure response                                          │
+│  │                                                                              │
+│  └─────────────────────────────────────────────────────────────────────────────┘│
+│                                         │                                       │
+│                                         ▼                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐│
+│  │                         USER INTERFACE                                       │
+│  │                                                                              │
+│  │  • Green LED: Scan successful                                                │
+│  │  • Red LED: Scan failed                                                      │
+│  │  • LCD Display: Show student/visitor name                                    │
+│  │  • Buzzer: Audio feedback                                                    │
+│  │                                                                              │
+│  └─────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         COMPLETE VMS DATA PIPELINE ARCHITECTURE                                         │
+│                                              (Raspberry Pi - Edge to Cloud)                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │                                         HARDWARE LAYER (Edge Devices)                                              │ │
+│  │                                                                                                                    │ │
+│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐      │ │
+│  │  │   ESP32-CAM      │  │   ESP32-C3       │  │   USB Camera     │  │   RFID Reader    │  │   BLE Tags       │      │ │
+│  │  │                  │  │                  │  │   (Pi Camera)    │  │   (MFRC522)      │  │   (Visitor)      │      │ │
+│  │  │ ┌──────────────┐ │  │ ┌──────────────┐ │  │ ┌──────────────┐ │  │ ┌──────────────┐ │  │ ┌──────────────┐ │      │ │
+│  │  │ │ QR Scanner   │ │  │ │ BLE Scanner  │ │  │ │ OCR Reader   │ │  │ │ Card Reader  │ │  │ │ UUID:xxx     │ │      │ │
+│  │  │ │ Motion Sensor│ │  │ │ Tag Detector │ │  │ │ Face Detect  │ │  │ │ UID Scanner  │ │  │ │ Battery:xx%  │ │      │ │
+│  │  │ │ LED/Buzzer   │ │  │ │ RSSI Filter  │ │  │ │ QR Decode    │ │  │ │ LED Feedback │ │  │ │ RSSI: -xxdBm│ │       │ │
+│  │  │ └──────────────┘ │  │ └──────────────┘ │  │ └──────────────┘ │  │ └──────────────┘ │  │ └──────────────┘ │      │ │
+│  │  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘  └────────┬─────────┘      │ │
+│  │           │                     │                     │                     │                     │                │ │
+│  └───────────┼─────────────────────┼─────────────────────┼─────────────────────┼─────────────────────┼────────────────┘ │
+│              │                     │                     │                     │                     │                  │
+│              │ (WiFi - MQTT)       │ (WiFi - MQTT)       │ (USB/CSI)           │ (SPI/UART)          │ (BLE - 2.4GHz)   │
+│              │ Port 1883           │ Port 1883           │                     │                     │                  │
+│              ▼                     ▼                     ▼                     ▼                     ▼                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │                                      COMMUNICATION LAYER                                                           │ │
+│  │                                                                                                                    │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────│ │
+│  │  │                                         MQTT Broker (Mosquitto)                                               │ │ │
+│  │  │  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────│ │ │
+│  │  │  │ Topics:                                                                                                   ││ │ │
+│  │  │  │   jkuat/attendance/class/sign_in    ← ESP32-CAM                                                           ││ │ │
+│  │  │  │   jkuat/visitor/tag/ping            ← ESP32-C3                                                            ││ │ │
+│  │  │  │   jkuat/system/heartbeat/+          ← All Devices                                                         ││ │ │
+│  │  │  │   jkuat/security/access/request     ← RFID Reader                                                         ││ │ │
+│  │  │  │   jkuat/attendance/scan             ← Camera OCR                                                          ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      WebSocket Server (Daphne)                                                │ │ │
+│  │  │  Port: 8001                                                                                                   │ │ │
+│  │  │  ws://raspberrypi.local/ws/attendance/  - Real-time attendance updates                                        │ │ │
+│  │  │  ws://raspberrypi.local/ws/visitors/    - Real-time visitor tracking                                          │ │ │
+│  │  │  ws://raspberrypi.local/ws/alerts/      - Security alerts                                                     │ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│              │                     │                     │                     │                     │                  │
+│              ▼                     ▼                     ▼                     ▼                     ▼                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │                                      APPLICATION LAYER (Django)                                                    │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      MQTT Client Service                                                      │ │ │
+│  │  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Message Handlers:                                                                                         ││ │ │
+│  │  │  │   handle_attendance_checkin()  → Process QR scan → Create Session → Record Attendance                     ││ │ │
+│  │  │  │   handle_visitor_ping()        → Update location → Calculate distance → Store movement                    ││ │ │
+│  │  │  │   handle_heartbeat()           → Update status → Check health → Trigger alerts                            ││ │ │
+│  │  │  │   handle_access_request()      → Verify permission → Check 2FA → Grant/Deny access                        ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      Core Services                                                            │ │ │
+│  │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │ │ │
+│  │  │  │ Attendance  │ │  Visitor    │ │   Access    │ │   Device    │ │    OCR      │ │   Session   │              │ │ │
+│  │  │  │  Service    │ │  Service    │ │  Service    │ │  Service    │ │  Service    │ │  Service    │              │ │ │
+│  │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘              │ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      API Layer (REST)                                                         │ │ │
+│  │  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Endpoints:                                                                                                ││ │ │
+│  │  │  │   POST   /api/v1/attendance/checkin/      - Record attendance                                             ││ │ │
+│  │  │  │   POST   /api/v1/visitors/checkin/        - Visitor check-in                                              ││ │ │
+│  │  │  │   GET    /api/v1/visitors/tracking/       - Get visitor locations                                         ││ │ │
+│  │  │  │   POST   /api/v1/access/request/          - Access request                                                ││ │ │
+│  │  │  │   POST   /api/v1/ocr/process/             - OCR ID processing                                             ││ │ │
+│  │  │  │   POST   /api/v1/session/create/          - Create session                                                ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ┘ │
+│              │                     │                     │                     │                                        │
+│              ▼                     ▼                     ▼                     ▼                                        │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │                                      DATA LAYER                                                                    │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      PostgreSQL / MySQL                                                       │ │ │
+│  │  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Tables:                                                                                                   ││ │ │
+│  │  │  │   core_institution, core_college, core_school, core_department, core_program                              ││ │ │
+│  │  │  │   core_person, core_student, core_staff, core_visitor                                                     ││ │ │
+│  │  │  │   attendance_classattendance, attendance_attendancesession, attendance_verificationlog                    ││ │ │
+│  │  │  │   visitors_visitorvisit, visitors_visitormovement, visitors_visitorsession, visitors_bletag               ││ │ │
+│  │  │  │   access_accesszone, access_accesspermission, access_accesslog, access_twofactorsession                   ││ │ │
+│  │  │  │   devices_edgenode, devices_nodeheartbeat, devices_otasession                                             ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      Redis Cache                                                              │ │ │
+│  │  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Cache Keys:                                                                                               ││ │ │
+│  │  │  │   session:{session_id}           - Active sessions                                                        ││ │ │
+│  │  │  │   visitor_location:{tag_uuid}    - Current visitor location                                               ││ │ │
+│  │  │  │   device_status:{node_uuid}      - Device online/offline                                                  ││ │ │
+│  │  │  │   attendance_today               - Today's attendance count                                               ││ │ │
+│  │  │  │   active_visitors                - Currently active visitors                                              ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│              │                                                                                                          │
+│              ▼                                                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                      PRESENTATION LAYER                                                            │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      Nginx + Gunicorn                                                         │ │ │
+│  │  │  Port: 80/443                                                                                                 │ │ │
+│  │  │  http://raspberrypi.local/  → Web Dash board                                                                  │ │ │
+│  │  │  http://raspberrypi.local/admin → Admin Panel                                                                 │ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                    │ │
+│  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                                      Web Dashboard (HTML/CSS/JS)                                              │ │ │
+│  │  │  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Components:                                                                                               ││ │ │
+│  │  │  │   - Real-time attendance feed (WebSocket)                                                                 ││ │ │
+│  │  │  │   - Visitor tracking map (Leaflet)                                                                        ││ │ │
+│  │  │  │   - Device health dashboard (Charts.js)                                                                   ││ │ │
+│  │  │  │   - Access logs table (DataTables)                                                                        ││ │ │
+│  │  │  │   - QR scanner interface (jsQR)                                                                           ││ │ │
+│  │  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ┘ │
+│                                                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+# Install frontend dependencies (add to base template)
+# Leaflet, MarkerCluster, Heatmap already included via CDN
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              VISITOR MOVEMENT TRACKING WITH OPENSTREETMAP                                                │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                         DATA COLLECTION LAYER                                                        │ │
+│  │                                                                                                                       │ │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                                            │ │
+│  │  │   ESP32-C3   │  │   BLE Tags   │  │   Gateways   │  │   RFID       │                                            │ │
+│  │  │  RSSI Triang.│  │  UUID:xxx    │  │  Zone:LabA   │  │  Entry/Exit  │                                            │ │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                                            │ │
+│  │         │                 │                 │                 │                                                      │ │
+│  │         └─────────────────┼─────────────────┼─────────────────┘                                                      │ │
+│  │                           │                 │                                                                        │ │
+│  │                           ▼                 ▼                                                                        │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                              MQTT Broker (Movement Events)                                                       │ │ │
+│  │  │  Topics: jkuat/visitor/tag/ping, jkuat/visitor/tracking/+, jkuat/visitor/alert/zone_breach                     │ │ │
+│  │  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                    │                                                                      │
+│                                                    ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                         PROCESSING LAYER                                                              │ │
+│  │                                                                                                                       │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                              Movement Service (apps/visitors/services.py)                                        │ │ │
+│  │  │  - calculate_distance_from_rssi()  - triangulate_position()  - detect_zone_entry_exit()                         │ │ │
+│  │  │  - calculate_dwell_time()          - detect_suspicious_movement()  - generate_movement_path()                   │ │ │
+│  │  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  │                                                                                                                       │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                              Geofencing Service (apps/access/geofence.py)                                       │ │ │
+│  │  │  - point_in_polygon()    - check_zone_boundary()  - generate_heatmap_data()                                     │ │ │
+│  │  │  - calculate_route()      - predict_destination()  - detect_anomaly()                                           │ │ │
+│  │  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                    │                                                                      │
+│                                                    ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                         VISUALIZATION LAYER (OpenStreetMap)                                          │ │
+│  │                                                                                                                       │ │
+│  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │ │
+│  │  │                              Leaflet.js + OpenStreetMap                                                          │ │ │
+│  │  │                                                                                                                   │ │ │
+│  │  │  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ │ │
+│  │  │  │ Features:                                                                                                    ││ │ │
+│  │  │  │   - Real-time visitor markers with clustering                                                               ││ │ │
+│  │  │  │   - Movement path lines with timestamps                                                                    ││ │ │
+│  │  │  │   - Zone boundaries (polygons)                                                                              ││ │ │
+│  │  │  │   - Heatmap of high-traffic areas                                                                          ││ │ │
+│  │  │  │   - Dwell time indicators                                                                                   ││ │ │
+│  │  │  │   - Alert popups for zone breaches                                                                         ││ │ │
+│  │  │  │   - Timeline slider for replay                                                                            ││ │ │
+│  │  │  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│ │ │
+│  │  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

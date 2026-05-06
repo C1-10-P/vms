@@ -1,0 +1,732 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Visitor Sessions - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        /* (keep all existing styles) */
+        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .status-badge { padding: 0.35rem 0.65rem; font-size: 0.7rem; font-weight: 500; border-radius: 0.375rem; display: inline-block; }
+        .status-pending { background-color: #fff3e0; color: #e65100; }
+        .status-active { background-color: #e8f5e9; color: #2e7d32; }
+        .status-completed { background-color: #e3f2fd; color: #1565c0; }
+        .status-expired { background-color: #eceff1; color: #455a64; }
+        .status-awaiting_tag { background-color: #f3e5f5; color: #6a1b9a; }
+        .status-awaiting_info { background-color: #fff8e1; color: #f57c00; }
+        .session-type-badge { padding: 0.2rem 0.5rem; font-size: 0.65rem; border-radius: 0.25rem; background-color: #e0e0e0; color: #424242; }
+        .avatar-sm { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: #f0f0f0; }
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+        .step { flex: 1; text-align: center; position: relative; z-index: 1; }
+        .step-circle { width: 40px; height: 40px; border-radius: 50%; background-color: #e0e0e0; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 0.5rem; }
+        .step.active .step-circle { background-color: #696cff; color: white; }
+        .step.completed .step-circle { background-color: #28c76f; color: white; }
+        .step-label { font-size: 0.75rem; color: #6c757d; }
+        .step.active .step-label { color: #696cff; font-weight: 500; }
+        .step.completed .step-label { color: #28c76f; }
+        .step:not(:last-child):after { content: ''; position: absolute; top: 20px; right: -50%; width: 100%; height: 2px; background-color: #e0e0e0; z-index: -1; }
+        .step.active:after, .step.completed:after { background-color: #696cff; }
+        .ocr-preview { max-width: 100%; max-height: 200px; border-radius: 0.5rem; margin-top: 0.5rem; }
+        .detail-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-bottom: 0.25rem; }
+        .detail-value { font-size: 0.9rem; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+         {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search sessions..." id="tableSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <!-- Stats Cards (same as original) -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Sessions</span><h3 class="mb-0">{{ total_sessions|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-time bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Pending</span><h3 class="mb-0 text-warning">{{ pending_sessions|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-hourglass bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Completed</span><h3 class="mb-0 text-success">{{ completed_sessions|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Expired</span><h3 class="mb-0 text-danger">{{ expired_sessions|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-danger rounded p-3"><i class="bx bx-calendar-x bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sessions Table Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div><h5 class="card-title mb-0">Visitor Sessions</h5><small class="text-muted">Manage visitor check-in, check-out, and tag assignment sessions</small></div>
+                                <div class="d-flex gap-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bx bx-download me-1"></i> Export</button>
+                                        <div class="dropdown-menu"><a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a><a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a><a class="dropdown-item" href="#" id="printTableBtn">Print</a></div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#step1Modal"><i class="bx bx-plus me-1"></i> New Session</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="card-body border-bottom">
+                                <div class="row g-3">
+                                    <div class="col-md-3"><label class="form-label text-muted small">Status</label><select class="form-select" id="filterStatus"><option value="">All</option>{% for value, label in status_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+                                    <div class="col-md-3"><label class="form-label text-muted small">Session Type</label><select class="form-select" id="filterType"><option value="">All</option>{% for value, label in type_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+                                    <div class="col-md-3"><label class="form-label text-muted small">Date Range</label><input type="text" class="form-control" id="dateRange" placeholder="Select date range"></div>
+                                    <div class="col-md-3 d-flex align-items-end"><button class="btn btn-secondary w-100" id="clearFiltersBtn"><i class="bx bx-reset"></i> Clear</button></div>
+                                </div>
+                            </div>
+
+                            <!-- Sessions Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="sessionsTable">
+                                    <thead><tr><th>Session ID</th><th>Visitor</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        {% for session in sessions %}
+                                        <tr>
+                                            <td><code class="small">{{ session.session_id|truncatechars:13 }}</code></td>
+                                            <td>
+                                                {% if session.visitor %}
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2"><i class="bx bx-user text-primary"></i></div>
+                                                        <div><strong>{{ session.visitor.person.first_name|default:"" }} {{ session.visitor.person.last_name|default:"" }}</strong><br><small class="text-muted">{{ session.visitor.organization|default:"—" }}</small></div>
+                                                    </div>
+                                                {% else %}<span class="text-muted">—</span>{% endif %}
+                                            </td>
+                                            <td><span class="session-type-badge">{{ session.get_session_type_display }}</span></td>
+                                            <td>
+                                                {% if session.status == 'pending' %}<span class="status-badge status-pending">Pending</span>
+                                                {% elif session.status == 'active' %}<span class="status-badge status-active">Active</span>
+                                                {% elif session.status == 'completed' %}<span class="status-badge status-completed">Completed</span>
+                                                {% elif session.status == 'expired' %}<span class="status-badge status-expired">Expired</span>
+                                                {% elif session.status == 'awaiting_tag' %}<span class="status-badge status-awaiting_tag">Awaiting Tag</span>
+                                                {% elif session.status == 'awaiting_info' %}<span class="status-badge status-awaiting_info">Awaiting Info</span>{% endif %}
+                                            </td>
+                                            <td><small>{{ session.created_at|date:"Y-m-d H:i" }}</small></td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded"></i></button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewSession({{ session.id }})"><i class="bx bx-show-alt me-1"></i> View Details</a>
+                                                        {% if session.status == 'pending' or session.status == 'awaiting_tag' or session.status == 'awaiting_info' %}
+                                                            <div class="dropdown-divider"></div>
+                                                            <a class="dropdown-item text-success" href="javascript:void(0);" onclick="resumeSession('{{ session.session_id }}', '{{ session.session_type }}', '{{ session.status }}')"><i class="bx bx-log-in me-1"></i> Continue</a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="6" class="text-center py-5"><i class="bx bx-time bx-lg text-muted mb-3 d-block"></i><h6 class="text-muted">No sessions found</h6><p class="text-muted small">Click "New Session" to create a visitor session</p></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if is_paginated %}
+                            <div class="card-footer"><nav><ul class="pagination justify-content-center mb-0">{% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}{% for num in page_obj.paginator.page_range %}{% if page_obj.number == num %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>{% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>{% endif %}{% endfor %}{% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}</ul></nav></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme"><div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column"><div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div><div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div></div></footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: SELECT SESSION TYPE MODAL (Check‑in, Check‑out, Tag Assign, OCR) -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="step1Modal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Select Session Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-primary w-100 py-3 mb-3 session-type-btn" data-type="checkin">
+                                <i class="bx bx-log-in-circle fs-1 d-block mb-2"></i>
+                                <strong>Check‑In Session</strong><br>
+                                <small>Process visitor check‑in with ID/QR scan</small>
+                            </button>
+                        </div>
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-danger w-100 py-3 mb-3 session-type-btn" data-type="checkout">
+                                <i class="bx bx-log-out-circle fs-1 d-block mb-2"></i>
+                                <strong>Check‑Out Session</strong><br>
+                                <small>End active visit and release tag</small>
+                            </button>
+                        </div>
+                        
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-info w-100 py-3 session-type-btn" data-type="ocr_process">
+                                <i class="bx bx-camera fs-1 d-block mb-2"></i>
+                                <strong>OCR Processing Session</strong><br>
+                                <small>Extract data from ID document</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHECK‑IN / OCR SESSION MODAL (steps 1‑4) -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="checkinModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-log-in-circle me-2"></i>Visitor Check‑In</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step Indicator -->
+                    <div class="step-indicator mb-4">
+                        <div class="step active" id="step1Indicator"><div class="step-circle">1</div><div class="step-label">Select Session</div></div>
+                        <div class="step" id="step2Indicator"><div class="step-circle">2</div><div class="step-label">Scan/Capture</div></div>
+                        <div class="step" id="step3Indicator"><div class="step-circle">3</div><div class="step-label">Verify Info</div></div>
+                        <div class="step" id="step4Indicator"><div class="step-circle">4</div><div class="step-label">Complete</div></div>
+                    </div>
+                    
+                    <!-- Step 1: Upload image / manual entry -->
+                    <div id="checkinStep1">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">ID Type</label>
+                                <select class="form-select" id="idTypeSelect">
+                                    <option value="national_id">National ID</option>
+                                    <option value="passport">Passport</option>
+                                    <option value="drivers_license">Driver's License</option>
+                                    <option value="company_id">Company ID</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Scan Method</label>
+                                <select class="form-select" id="scanMethodSelect">
+                                    <option value="ocr">OCR (Document Scan)</option>
+                                    <option value="qr">QR Code</option>
+                                    <option value="manual">Manual Entry</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Upload ID Image</label>
+                                <input type="file" class="form-control" id="idImage" accept="image/*" capture="environment">
+                                <div id="imagePreview"></div>
+                            </div>
+                            <div class="col-12"><div class="alert alert-info"><i class="bx bx-info-circle me-1"></i><small>Upload a clear photo of the visitor's ID document. The system will automatically extract the information.</small></div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Extracted data + additional fields -->
+                    <div id="checkinStep2" style="display: none;">
+                        <div id="ocrProgress" style="display: none;" class="text-center py-4">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <p>Processing image and extracting data...</p>
+                        </div>
+                        <div id="extractedData" style="display: none;">
+                            <h6 class="mb-3">Extracted Information</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" class="form-control" id="extractedName" readonly></div>
+                                <div class="col-md-6"><label class="form-label">ID Number</label><input type="text" class="form-control" id="extractedIdNumber" readonly></div>
+                                <div class="col-md-6"><label class="form-label">Date of Birth</label><input type="text" class="form-control" id="extractedDob" readonly></div>
+                                <div class="col-md-6"><label class="form-label">Phone Number</label><input type="tel" class="form-control" id="phoneNumber" placeholder="+254712345678"></div>
+                                <div class="col-12"><label class="form-label">Email</label><input type="email" class="form-control" id="email" placeholder="visitor@example.com"></div>
+                                <div class="col-12"><label class="form-label">Organization</label><input type="text" class="form-control" id="organization" placeholder="Company/Organization"></div>
+                                <div class="col-12"><label class="form-label">Purpose of Visit</label><select class="form-select" id="purpose"><option value="meeting">Meeting</option><option value="delivery">Delivery</option><option value="interview">Interview</option><option value="maintenance">Maintenance</option><option value="other">Other</option></select></div>
+                                <div class="col-12"><label class="form-label">Host Person</label><select class="form-select" id="hostPerson"><option value="">Select Host</option>{% for staff in staff_members %}<option value="{{ staff.id }}">{{ staff.person.first_name|default:"" }} {{ staff.person.last_name|default:staff.get_full_name }}</option>{% endfor %}</select></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Confirmation -->
+                    <div id="checkinStep3" style="display: none;">
+                        <div class="text-center py-4">
+                            <i class="bx bx-check-circle fs-1 text-success mb-3 d-block"></i>
+                            <h5>Check-in Complete!</h5>
+                            <p>The visitor has been successfully checked in.</p>
+                            <div id="visitorSummary" class="text-start bg-light p-3 rounded mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="backBtn" style="display: none;">Back</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">Next</button>
+                    <button type="button" class="btn btn-success" id="completeBtn" style="display: none;">Complete Check-in</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHECK‑OUT SESSION MODAL -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="checkoutModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-log-out-circle me-2"></i>Visitor Check‑Out</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Visitor ID / Tag UUID</label>
+                            <input type="text" class="form-control" id="checkoutIdentifier" placeholder="Enter visitor ID, ID number, or tag UUID">
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="bx bx-info-circle me-1"></i>
+                                <small>Make sure the visitor is ready to check out. This will end their active visit and release any assigned BLE tag.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="checkoutProgress" style="display: none;" class="text-center py-4">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p>Processing check‑out...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmCheckoutBtn">Confirm Check‑Out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TAG ASSIGNMENT SESSION MODAL -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="tagAssignModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-tag me-2"></i>Assign BLE Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Visitor ID / ID Number</label>
+                            <input type="text" class="form-control" id="visitorIdentifier" placeholder="Enter visitor ID or ID number">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Tag UUID</label>
+                            <input type="text" class="form-control" id="tagUuid" placeholder="Scan or enter tag UUID">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="simulateTagScan()"><i class="bx bx-bluetooth"></i> Simulate Scan</button>
+                        </div>
+                    </div>
+                    <div id="tagAssignProgress" style="display: none;" class="text-center py-4">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <p>Assigning tag to visitor...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="assignTagBtn">Assign Tag</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Session Modal -->
+    <div class="modal fade" id="viewSessionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Session Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewSessionContent"><div class="text-center py-4"><div class="spinner-border text-primary"></div></div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><div id="sessionModalActions"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let dataTable, currentStep = 1, sessionId = null;
+        
+        $(document).ready(function() {
+            dataTable = $('#sessionsTable').DataTable({responsive: true, paging: false, searching: false, info: false, order: [[4, 'desc']], language: { emptyTable: "No sessions found" }});
+            $('.form-select').select2({theme: 'bootstrap-5', width: '100%'});
+            flatpickr("#dateRange", {mode: "range", dateFormat: "Y-m-d", onChange: function(dates) {if(dates.length===2) applyDateFilter(dates[0], dates[1]);}});
+            
+            $('#idImage').on('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) { $('#imagePreview').html('<img src="' + event.target.result + '" class="ocr-preview">'); };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        function applyFilters() {
+            let url = new URL(window.location.href);
+            if ($('#filterStatus').val()) url.searchParams.set('status', $('#filterStatus').val()); else url.searchParams.delete('status');
+            if ($('#filterType').val()) url.searchParams.set('session_type', $('#filterType').val()); else url.searchParams.delete('session_type');
+            window.location.href = url.toString();
+        }
+        function applyDateFilter(start, end) { let url=new URL(window.location.href); url.searchParams.set('start_date',start.toISOString().split('T')[0]); url.searchParams.set('end_date',end.toISOString().split('T')[0]); window.location.href=url.toString(); }
+        
+        $('#filterStatus, #filterType').on('change', applyFilters);
+        $('#clearFiltersBtn').on('click', function() { window.location.href = window.location.pathname; });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {buttons: [{extend:'excel',filename:'sessions_export'},{extend:'csv',filename:'sessions_export'},{extend:'print',title:'Sessions Report'}]});
+        
+        // ============================================
+        // STEP 1: Session Type Selection
+        // ============================================
+        $('.session-type-btn').on('click', function() {
+            const type = $(this).data('type');
+            $('#step1Modal').modal('hide');
+            
+            if (type === 'checkin' || type === 'ocr_process') {
+                $.post('/vms/sessions/create/', {session_type: type, csrfmiddlewaretoken: '{{ csrf_token }}'})
+                    .done(function(response) {
+                        if (response.success || response.session_id) {
+                            sessionId = response.session_id;
+                            $('#checkinModal').modal('show');
+                            currentStep = 1;
+                            updateCheckinStep();
+                        } else { toastr.error('Failed to create session'); }
+                    }).fail(function() { toastr.error('Error creating session'); });
+            } else if (type === 'tag_assign') {
+                $.post('/vms/sessions/create/', {session_type: 'tag_assign', csrfmiddlewaretoken: '{{ csrf_token }}'})
+                    .done(function(response) {
+                        if (response.success || response.session_id) {
+                            sessionId = response.session_id;
+                            $('#tagAssignModal').modal('show');
+                        } else { toastr.error('Failed to create session'); }
+                    }).fail(function() { toastr.error('Error creating session'); });
+            } else if (type === 'checkout') {
+                $('#checkoutModal').modal('show');
+            }
+        });
+        
+        // ============================================
+        // CHECK‑IN / OCR WIZARD
+        // ============================================
+        function updateCheckinStep() {
+            $('#checkinStep1, #checkinStep2, #checkinStep3').hide();
+            $(`#checkinStep${currentStep}`).show();
+            $('#step1Indicator, #step2Indicator, #step3Indicator, #step4Indicator').removeClass('active completed');
+            if (currentStep === 1) $('#step1Indicator').addClass('active');
+            else if (currentStep === 2) { $('#step1Indicator').addClass('completed'); $('#step2Indicator').addClass('active'); }
+            else if (currentStep === 3) { $('#step1Indicator, #step2Indicator').addClass('completed'); $('#step3Indicator').addClass('active'); }
+            else if (currentStep === 4) { $('#step1Indicator, #step2Indicator, #step3Indicator').addClass('completed'); $('#step4Indicator').addClass('active'); }
+            $('#backBtn').toggle(currentStep > 1 && currentStep < 4);
+            $('#nextBtn').toggle(currentStep < 3);
+            $('#completeBtn').toggle(currentStep === 3);
+        }
+        
+        $('#nextBtn').on('click', function() {
+            if (currentStep === 1) {
+                const file = $('#idImage')[0].files[0];
+                if (!file) { toastr.error('Please upload an ID image'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                formData.append('id_type', $('#idTypeSelect').val());
+                formData.append('session_id', sessionId);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                $('#ocrProgress').show();
+                $('#extractedData').hide();
+                $.ajax({
+                    url: '/vms/sessions/process-ocr/',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#ocrProgress').hide();
+                        if (response.success) {
+                            $('#extractedName').val(response.data.full_name || '');
+                            $('#extractedIdNumber').val(response.data.id_number || '');
+                            $('#extractedDob').val(response.data.dob || '');
+                            $('#extractedData').show();
+                            currentStep = 2;
+                            updateCheckinStep();
+                        } else { toastr.error(response.error || 'OCR processing failed'); }
+                    },
+                    error: function() { $('#ocrProgress').hide(); toastr.error('OCR processing failed'); }
+                });
+            } else if (currentStep === 2) {
+                currentStep = 3;
+                updateCheckinStep();
+            }
+        });
+        
+        $('#backBtn').on('click', function() { if (currentStep > 1) { currentStep--; updateCheckinStep(); } });
+        
+        $('#completeBtn').on('click', function() {
+            const data = {
+                session_id: sessionId,
+                email: $('#email').val(),
+                phone_number: $('#phoneNumber').val(),
+                organization: $('#organization').val(),
+                purpose: $('#purpose').val(),
+                host_person_id: $('#hostPerson').val(),
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+            $.ajax({
+                url: '/vms/sessions/complete-checkin/',
+                method: 'POST',
+                data: data,
+                success: function(response) {
+                    if (response.success) {
+                        currentStep = 4;
+                        updateCheckinStep();
+                        $('#visitorSummary').html(`<strong>Name:</strong> ${response.visitor_name}<br><strong>ID Number:</strong> ${response.id_number}<br><strong>Organization:</strong> ${data.organization || '—'}<br><strong>Host:</strong> ${$('#hostPerson option:selected').text() || '—'}`);
+                        toastr.success('Check-in completed successfully!');
+                        setTimeout(() => { $('#checkinModal').modal('hide'); location.reload(); }, 2000);
+                    } else { toastr.error(response.error || 'Check-in failed'); }
+                },
+                error: function() { toastr.error('An error occurred'); }
+            });
+        });
+        
+        // ============================================
+        // CHECK‑OUT
+        // ============================================
+        $('#confirmCheckoutBtn').on('click', function() {
+            const identifier = $('#checkoutIdentifier').val().trim();
+            if (!identifier) { toastr.error('Please enter visitor ID, ID number, or tag UUID'); return; }
+            $('#checkoutProgress').show();
+            $('#confirmCheckoutBtn').prop('disabled', true);
+            $.ajax({
+                url: '/vms/sessions/checkout/',
+                method: 'POST',
+                data: { identifier: identifier, csrfmiddlewaretoken: '{{ csrf_token }}' },
+                success: function(response) {
+                    $('#checkoutProgress').hide();
+                    if (response.success) {
+                        toastr.success(response.message || 'Visitor checked out successfully');
+                        $('#checkoutModal').modal('hide');
+                        location.reload();
+                    } else { toastr.error(response.error || 'Check-out failed'); $('#confirmCheckoutBtn').prop('disabled', false); }
+                },
+                error: function() { $('#checkoutProgress').hide(); toastr.error('An error occurred'); $('#confirmCheckoutBtn').prop('disabled', false); }
+            });
+        });
+        
+        // ============================================
+        // TAG ASSIGNMENT
+        // ============================================
+        $('#assignTagBtn').on('click', function() {
+            const visitorId = $('#visitorIdentifier').val();
+            const tagUuid = $('#tagUuid').val();
+            if (!visitorId) { toastr.error('Please enter visitor ID'); return; }
+            if (!tagUuid) { toastr.error('Please enter tag UUID'); return; }
+            $('#tagAssignProgress').show();
+            $('#assignTagBtn').prop('disabled', true);
+            $.ajax({
+                url: `/vms/sessions/${sessionId}/assign-tag/`,
+                method: 'POST',
+                data: { visitor_id: visitorId, tag_uuid: tagUuid, csrfmiddlewaretoken: '{{ csrf_token }}' },
+                success: function(response) {
+                    $('#tagAssignProgress').hide();
+                    if (response.success) {
+                        toastr.success('Tag assigned successfully!');
+                        $('#tagAssignModal').modal('hide');
+                        location.reload();
+                    } else { toastr.error(response.error || 'Tag assignment failed'); $('#assignTagBtn').prop('disabled', false); }
+                },
+                error: function() { $('#tagAssignProgress').hide(); toastr.error('An error occurred'); $('#assignTagBtn').prop('disabled', false); }
+            });
+        });
+        
+        function simulateTagScan() { $('#tagUuid').val('TAG-' + Math.random().toString(36).substr(2, 8).toUpperCase()); }
+        
+        // ============================================
+        // VIEW & RESUME SESSION
+        // ============================================
+        function viewSession(sessionPk) {
+            $('#viewSessionModal').modal('show');
+            $('#viewSessionContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $('#sessionModalActions').empty();
+            $.get(`/vms/sessions/${sessionPk}/detail-json/`, function(data) {
+                let statusClass = '';
+                switch(data.status) {
+                    case 'pending': statusClass = 'status-pending'; break;
+                    case 'active': statusClass = 'status-active'; break;
+                    case 'completed': statusClass = 'status-completed'; break;
+                    case 'expired': statusClass = 'status-expired'; break;
+                    case 'awaiting_tag': statusClass = 'status-awaiting_tag'; break;
+                    case 'awaiting_info': statusClass = 'status-awaiting_info'; break;
+                }
+                const html = `<div class="row mb-3"><div class="col-md-6"><div class="detail-label">Session ID</div><div class="detail-value"><code>${data.session_id}</code></div></div><div class="col-md-6"><div class="detail-label">Status</div><div class="detail-value"><span class="status-badge ${statusClass}">${data.status_display}</span></div></div></div>
+                <div class="row mb-3"><div class="col-md-6"><div class="detail-label">Session Type</div><div class="detail-value">${data.session_type_display}</div></div><div class="col-md-6"><div class="detail-label">Created</div><div class="detail-value">${new Date(data.created_at).toLocaleString()}</div></div></div>
+                <div class="row mb-3"><div class="col-md-6"><div class="detail-label">Expires At</div><div class="detail-value">${data.expires_at ? new Date(data.expires_at).toLocaleString() : '—'}</div></div><div class="col-md-6"><div class="detail-label">Time Remaining</div><div class="detail-value">${data.minutes_remaining > 0 ? data.minutes_remaining + ' minutes' : 'Expired'}</div></div></div>
+                <hr><h6 class="mb-3">Visitor Information</h6>${data.visitor ? `<div class="row mb-2"><div class="col-md-6"><div class="detail-label">Name</div><div class="detail-value">${data.visitor.name || '—'}</div></div><div class="col-md-6"><div class="detail-label">Organization</div><div class="detail-value">${data.visitor.organization || '—'}</div></div></div><div class="row mb-2"><div class="col-md-6"><div class="detail-label">ID Number</div><div class="detail-value">${data.visitor.id_number || '—'}</div></div><div class="col-md-6"><div class="detail-label">Host</div><div class="detail-value">${data.visitor.host || '—'}</div></div></div>` : '<p class="text-muted">No visitor associated yet</p>'}
+                ${data.assigned_tag ? `<hr><h6 class="mb-3">Tag Information</h6><div class="row"><div class="col-md-12"><div class="detail-label">Tag UUID</div><div class="detail-value"><code>${data.assigned_tag.tag_uuid}</code></div></div></div>` : ''}`;
+                $('#viewSessionContent').html(html);
+                if (data.status === 'pending' || data.status === 'awaiting_tag' || data.status === 'awaiting_info') {
+                    $('#sessionModalActions').html(`<button class="btn btn-primary" onclick="resumeSession('${data.session_id}', '${data.session_type}', '${data.status}')"><i class="bx bx-log-in me-1"></i> Continue Session</button>`);
+                }
+            }).fail(function() { $('#viewSessionContent').html('<div class="alert alert-danger m-3">Failed to load session details.</div>'); });
+        }
+        
+        function resumeSession(sessionId, sessionType, status) {
+            $('#viewSessionModal').modal('hide');
+            if (sessionType === 'checkin' || sessionType === 'ocr_process') {
+                $('#checkinModal').modal('show');
+                currentStep = (status === 'awaiting_info' ? 2 : 1);
+                updateCheckinStep();
+            } else if (sessionType === 'tag_assign') {
+                $('#tagAssignModal').modal('show');
+            }
+        }
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

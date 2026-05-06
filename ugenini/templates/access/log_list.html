@@ -1,0 +1,756 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Access Logs - Ugenini VMS</title>
+    <meta name="description" content="View Access Logs and Audit Trail" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .result-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .result-granted {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .result-denied {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .log-detail-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .log-detail-value {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .json-viewer {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search logs..." id="tableSearch" />
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <!-- User Dropdown -->
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Total Events</span>
+                                                <h3 class="mb-0">{{ total_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-primary rounded p-3">
+                                                    <i class="bx bx-history bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Granted</span>
+                                                <h3 class="mb-0 text-success">{{ granted_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-success rounded p-3">
+                                                    <i class="bx bx-check-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Denied</span>
+                                                <h3 class="mb-0 text-danger">{{ denied_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-danger rounded p-3">
+                                                    <i class="bx bx-x-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Success Rate</span>
+                                                <h3 class="mb-0">
+                                                    {% if total_count > 0 %}
+                                                    {{ granted_count|floatformat:0 }}%
+                                                    {% else %}0{% endif %}
+                                                </h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-warning rounded p-3">
+                                                    <i class="bx bx-trending-up bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Logs Table Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h5 class="card-title mb-0">Access Logs</h5>
+                                    <small class="text-muted">Audit trail of all access events</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <!-- Export Dropdown -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bx bx-download me-1"></i> Export
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#" id="exportExcelBtn">
+                                                <i class="bx bx-file me-1"></i> Export to Excel
+                                            </a>
+                                            <a class="dropdown-item" href="#" id="exportCSVBtn">
+                                                <i class="bx bx-file-blank me-1"></i> Export to CSV
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#" id="printTableBtn">
+                                                <i class="bx bx-printer me-1"></i> Print
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters Row -->
+                            <div class="card-body border-bottom">
+                                <form method="GET" id="filterForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Date Range</label>
+                                            <input type="text" class="form-control" id="dateRange" name="date_range" 
+                                                   placeholder="Select date range">
+                                            <input type="hidden" name="start_date" id="startDate" value="{{ request.GET.start_date }}">
+                                            <input type="hidden" name="end_date" id="endDate" value="{{ request.GET.end_date }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Result</label>
+                                            <select class="form-select" name="result" id="filterResult">
+                                                <option value="">All</option>
+                                                {% for value, label in result_choices %}
+                                                <option value="{{ value }}" {% if request.GET.result == value %}selected{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Zone</label>
+                                            <select class="form-select" name="zone_id" id="filterZone">
+                                                <option value="">All Zones</option>
+                                                {% for zone in zones %}
+                                                <option value="{{ zone.id }}" {% if request.GET.zone_id|add:"0" == zone.id %}selected{% endif %}>
+                                                    {{ zone.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Person ID</label>
+                                            <input type="text" class="form-control" name="person_id" id="filterPerson" 
+                                                   placeholder="Person ID/Code" value="{{ request.GET.person_id }}">
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end gap-2">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="bx bx-search"></i> Filter
+                                            </button>
+                                            <a href="{% url 'access:log_list' %}" class="btn btn-secondary">
+                                                <i class="bx bx-reset"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Logs Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="logsTable">
+                                   <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Person</th>
+                                        <th>Zone</th>
+                                        <th>Device</th>
+                                        <th>Result</th>
+                                        <th>Reason</th>
+                                        <th>Actions</th>
+                                    </tr> </thead>
+                                    <tbody>
+                                        {% for log in logs %}
+                                        <tr data-log-id="{{ log.id }}">
+                                            <td>
+                                                <div class="small">
+                                                    <strong>{{ log.access_time|date:"Y-m-d" }}</strong>
+                                                    <br>
+                                                    <span class="text-muted">{{ log.access_time|date:"H:i:s" }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-user-circle me-2 text-primary"></i>
+                                                    <div>
+                                                        <strong>{{ log.person.get_full_name|default:log.person.first_name|default:"Unknown" }}</strong>
+                                                        {% if log.person.user_code %}
+                                                        <br><small class="text-muted">ID: {{ log.person.user_code }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-building me-1 text-muted"></i>
+                                                    {{ log.zone.name|default:"—" }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if log.node %}
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-microchip me-1 text-muted"></i>
+                                                    {{ log.node.name }}
+                                                </div>
+                                                {% else %}
+                                                <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="result-badge result-{{ log.result }}">
+                                                    {{ log.get_result_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small>{{ log.reason|default:"—"|truncatechars:30 }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewLog({{ log.id }})">
+                                                            <i class="bx bx-show-alt me-1"></i> View Details
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="shareLog({{ log.id }})">
+                                                            <i class="bx bx-share-alt me-1"></i> Share
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <i class="bx bx-history bx-lg text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted">No access logs found</h6>
+                                                <p class="text-muted small">Adjust filters or wait for access events</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="bx bx-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                Next <i class="bx bx-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODALS -->
+    <!-- ============================================ -->
+
+    <!-- View Log Modal (Scrollable Modal) -->
+    <div class="modal fade" id="viewLogModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Access Log Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewLogContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="shareLogBtn" onclick="shareCurrentLog()">
+                        <i class="bx bx-share-alt me-1"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Log Modal -->
+    <div class="modal fade" id="shareLogModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-share-alt me-2"></i>Share Access Log</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Share via Email</label>
+                        <input type="email" class="form-control" id="shareEmail" placeholder="recipient@example.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message (Optional)</label>
+                        <textarea class="form-control" id="shareMessage" rows="3" placeholder="Add a note..."></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle me-1"></i>
+                        <small>The log details will be shared as a PDF attachment.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="sendShareBtn">
+                        <i class="bx bx-send me-1"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <!-- Flatpickr for date range -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- html2pdf for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Show messages
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        // Initialize DataTable
+        let dataTable;
+        $(document).ready(function() {
+            dataTable = $('#logsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[0, 'desc']],
+                language: { emptyTable: "No logs found" }
+            });
+            
+            // Initialize Select2
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+            
+            // Initialize date range picker
+            flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length === 2) {
+                        $('#startDate').val(selectedDates[0].toISOString().split('T')[0]);
+                        $('#endDate').val(selectedDates[1].toISOString().split('T')[0]);
+                    }
+                },
+                defaultDate: [
+                    $('#startDate').val() || null,
+                    $('#endDate').val() || null
+                ]
+            });
+        });
+        
+        // Search functionality
+        $('#tableSearch').on('keyup', function() {
+            dataTable.search(this.value).draw();
+        });
+        
+        // Export functions
+        $('#exportExcelBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-excel').trigger();
+        });
+        
+        $('#exportCSVBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-csv').trigger();
+        });
+        
+        $('#printTableBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-print').trigger();
+        });
+        
+        // Add buttons
+        new $.fn.dataTable.Buttons(dataTable, {
+            buttons: [
+                { extend: 'excel', text: 'Excel', filename: 'access_logs_export' },
+                { extend: 'csv', text: 'CSV', filename: 'access_logs_export' },
+                { extend: 'print', text: 'Print', title: 'Access Logs Report' }
+            ]
+        });
+        
+        // Auto-submit filters on change
+        $('#filterResult, #filterZone').on('change', function() {
+            $('#filterForm').submit();
+        });
+        
+        // Enter key for person filter
+        $('#filterPerson').on('keypress', function(e) {
+            if (e.which === 13) {
+                $('#filterForm').submit();
+            }
+        });
+        
+        // Log CRUD Functions
+        let currentLogId = null;
+        
+        function viewLog(logId) {
+            currentLogId = logId;
+            $('#viewLogModal').modal('show');
+            $('#viewLogContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/logs/${logId}/detail/`, function(data) {
+                $('#viewLogContent').html(data);
+            }).fail(function() {
+                $('#viewLogContent').html('<div class="alert alert-danger m-3">Failed to load log details.</div>');
+            });
+        }
+        
+        function shareLog(logId) {
+            currentLogId = logId;
+            $('#shareLogModal').modal('show');
+        }
+        
+        function shareCurrentLog() {
+            if (!currentLogId) return;
+            
+            const email = $('#shareEmail').val();
+            const message = $('#shareMessage').val();
+            
+            if (!email) {
+                toastr.error('Please enter an email address');
+                return;
+            }
+            
+            $('#sendShareBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Sending...');
+            
+            $.post('/access/logs/share/', {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                log_id: currentLogId,
+                email: email,
+                message: message
+            })
+            .done(function(response) {
+                if (response.success) {
+                    $('#shareLogModal').modal('hide');
+                    toastr.success('Log shared successfully via email');
+                    $('#shareEmail, #shareMessage').val('');
+                } else {
+                    toastr.error(response.error || 'Failed to share');
+                }
+            })
+            .fail(function() {
+                toastr.error('An error occurred');
+            })
+            .always(function() {
+                $('#sendShareBtn').prop('disabled', false).html('<i class="bx bx-send me-1"></i> Send');
+            });
+        }
+        
+        // Export current view as PDF
+        function exportAsPDF() {
+            const element = document.getElementById('logsTable');
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: 'access_logs_report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+        
+        // Active menu item
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-sub .menu-item').forEach(item => item.classList.remove('active'));
+            
+            const menuLinks = document.querySelectorAll('.menu-link');
+            menuLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);') {
+                    if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) {
+                        const menuItem = link.closest('.menu-item');
+                        if (menuItem) menuItem.classList.add('active');
+                        
+                        const parentSub = link.closest('.menu-sub');
+                        if (parentSub) {
+                            const parentMenuItem = parentSub.closest('.menu-item');
+                            if (parentMenuItem) {
+                                parentMenuItem.classList.add('active');
+                                const parentSubMenu = parentMenuItem.querySelector('.menu-sub');
+                                if (parentSubMenu) parentSubMenu.style.display = 'block';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+        
+        // Refresh data every 60 seconds (optional)
+        let refreshInterval;
+        function startAutoRefresh() {
+            refreshInterval = setInterval(function() {
+                location.reload();
+            }, 60000);
+        }
+        
+        // Uncomment to enable auto-refresh
+        // startAutoRefresh();
+    </script>
+</body>
+</html>

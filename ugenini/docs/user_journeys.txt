@@ -1,0 +1,152 @@
+Student Attendance Flow
+
+1. Student presents QR code to ESP32-CAM
+2. ESP32-CAM captures image, decodes QR → "ENE221-0108/2018|TIE4101"
+3. Publishes MQTT: jkuat/attendance/class/sign_in
+4. Mosquitto forwards to Django MQTT Client
+5. handle_attendance_checkin() called
+6. AttendanceService.process_api_check_in() executed
+7. Validate student exists in database
+8. Check for duplicate today
+9. Create AttendanceSession → Validate → Complete
+10. Save ClassAttendance record to PostgreSQL
+11. Update Redis cache: attendance_today +1
+12. Broadcast via WebSocket to dashboard
+13. Dashboard updates real-time feed
+14. ESP32-CAM receives success response, blinks LED
+
+Visitor Check-in Flow
+
+1. Visitor presents National ID to USB camera
+2. Camera captures image, sends to OCR Service
+3. OCR Service preprocesses image
+4. Tesseract extracts text from ID
+5. Regex patterns extract: Name, ID Number
+6. VisitorSessionService.create_checkin_session()
+7. Session created with status='awaiting_info'
+8. Staff completes visitor info form
+9. VisitorSessionService.complete_checkin_session()
+10. Person and Visitor records created
+11. VisitorVisit started with check_in_time
+12. BLETag assigned to visitor
+13. VisitorSession marked complete
+14. ESP32-C3 starts tracking BLE tag
+15. Real-time location updates begin
+16. Dashboard shows visitor on map
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              ATTENDANCE SCANNING PIPELINE                                                                │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  Student     │    │  ESP32-CAM   │    │   MQTT       │    │   Django     │    │  Database   │    │  WebSocket   │  │
+│  │  Presents    │───▶│  Captures    │───▶│  Broker      │───▶│  Consumer    │───▶│  Stores     │───▶│  Broadcast   │  │
+│  │  QR Code     │    │  Image       │    │              │    │  Processes   │    │  Record     │    │  to Clients  │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                                                           │
+│  Data Format Progression:                                                                                                │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  QR Code ──▶ JPEG Image ──▶ Base64 ──▶ MQTT Message ──▶ JSON ──▶ Django Model ──▶ SQL ──▶ WebSocket JSON           ││
+│  │  "REG001"     (binary)       string     {topic, data}    {student:...}   ORM row      INSERT      {type, data}    ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+│  Timing: < 500ms from scan to database                                                                                   │
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              VISITOR CHECK-IN PIPELINE                                                                   │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  Visitor     │    │  USB Camera  │    │  OCR Service │    │   Session    │    │   Visitor    │    │  BLE Tag     │  │
+│  │  Shows ID    │───▶│  Captures    │───▶│  Extracts    │───▶│  Created     │───▶│  Recorded    │───▶│  Assigned    │  │
+│  │              │    │  Image       │    │  Text Data   │    │              │    │              │    │              │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                                                           │
+│  Data Flow Details:                                                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  Step 1: Image Capture ──▶ OpenCV preprocessing ──▶ Tesseract/EasyOCR ──▶ Extracted Text                           ││
+│  │  Step 2: Text ──▶ Regex Pattern Matching ──▶ Extracted Fields (Name, ID, DOB)                                     ││
+│  │  Step 3: Fields ──▶ VisitorSession Model ──▶ Session Created with status='awaiting_info'                          ││
+│  │  Step 4: Additional Info ──▶ Person/Visitor Created ──▶ VisitorVisit Started                                     ││
+│  │  Step 5: Tag Assignment ──▶ BLETag.assigned_to = visitor ──▶ Movement tracking begins                            ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              VISITOR TRACKING PIPELINE                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  BLE Tag     │    │  ESP32-C3    │    │   MQTT       │    │   Django     │    │  Database   │    │  Tracking    │  │
+│  │  Broadcasts  │───▶│  Scans       │───▶│  Broker      │───▶│  Consumer    │───▶│  Stores     │───▶│  Map         │  │
+│  │  Signal      │    │  RSSI        │    │              │    │  Updates     │    │  Movement   │    │  Updates     │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                                                           │
+│  RSSI to Distance Calculation:                                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  RSSI (dBm) ──▶ Distance Formula ──▶ Estimated Distance ──▶ Zone Proximity                                         ││
+│  │  -40 dBm ──▶ < 0.5m ──▶ "Very Close" ──▶ Enter/Exit detection                                                     ││
+│  │  -60 dBm ──▶ 1-3m   ──▶ "Near"       ──▶ Dwell time tracking                                                      ││
+│  │  -80 dBm ──▶ 5-10m  ──▶ "Far"        ──▶ Approximate location                                                     ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+│  Movement Event Types:                                                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  Event: "enter" ──▶ Visitor entered zone ──▶ Update occupancy +1 ──▶ Track start time                              ││
+│  │  Event: "exit"  ──▶ Visitor left zone  ──▶ Update occupancy -1 ──▶ Calculate dwell time                          ││
+│  │  Event: "ping"  ──▶ Still in zone      ──▶ Update last_seen ──▶ No occupancy change                              ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              ACCESS CONTROL PIPELINE                                                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  Person      │    │  RFID/QR     │    │   Django     │    │  Permission  │    │  2FA if     │    │  Door        │  │
+│  │  Requests    │───▶│  Scan        │───▶│  Service     │───▶│  Check       │───▶│  Required   │───▶│  Unlock      │  │
+│  │  Access      │    │              │    │              │    │              │    │              │    │  / Deny      │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                                                           │
+│  Permission Hierarchy Check:                                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  1. Check superuser ──▶ Yes ──▶ GRANT                                                                               ││
+│  │  2. Check specific permission (person_id + zone_id) ──▶ Yes ──▶ GRANT                                               ││
+│  │  3. Check person_type permission (student/staff/visitor) ──▶ Yes ──▶ GRANT                                          ││
+│  │  4. Check department/year restrictions ──▶ Pass ──▶ GRANT                                                           ││
+│  │  5. Check zone access_level (1=public, 2=staff, 3=restricted) ──▶ Match ──▶ GRANT                                  ││
+│  │  6. Default ──▶ DENY                                                                                                 ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              OCR PROCESSING PIPELINE                                                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  ID Card     │    │  Capture     │    │  Preprocess  │    │  OCR Engine  │    │  Regex       │    │  Extract     │  │
+│  │  Image       │───▶│  Image       │───▶│  Image       │───▶│  Tesseract/  │───▶│  Pattern     │───▶│  Fields      │  │
+│  │              │    │              │    │              │    │  EasyOCR     │    │  Matching    │    │              │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘  │
+│                                                                                                                           │
+│  Image Preprocessing Steps:                                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  Raw Image ──▶ Grayscale ──▶ Denoise (NLM) ──▶ Threshold (OTSU) ──▶ Deskew ──▶ Processed Image                    ││
+│  │  (BGR/JPEG)     (Single channel)   (Remove noise)    (Binary)         (Correct rotation)   (Clean text)            ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+│  Extraction Patterns:                                                                                                    │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│
+│  │  Student ID:  ([A-Z]{3,4}\d{3}-\d{4}/\d{4}) ──▶ ENE221-0108/2018                                                  ││
+│  │  National ID: (\d{8})                          ──▶ 12345678                                                        ││
+│  │  Name:        ([A-Z][a-z]+\s+[A-Z][a-z]+)      ──▶ John Doe                                                        ││
+│  │  Phone:       (?:\+254|0)(\d{9})               ──▶ 0712345678                                                      ││
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+│                                                                                                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘

@@ -1,0 +1,894 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Access Permissions - Ugenini VMS</title>
+    <meta name="description" content="Manage Access Permissions" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .priority-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .priority-high { background-color: #ffebee; color: #c62828; }
+        .priority-medium { background-color: #fff3e0; color: #e65100; }
+        .priority-low { background-color: #e8f5e9; color: #2e7d32; }
+        .person-type-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .person-type-student { background-color: #e3f2fd; color: #1565c0; }
+        .person-type-staff { background-color: #f3e5f5; color: #6a1b9a; }
+        .person-type-faculty { background-color: #e8f5e9; color: #2e7d32; }
+        .person-type-visitor { background-color: #fff3e0; color: #e65100; }
+        .person-type-contractor { background-color: #ffebee; color: #c62828; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search permissions..." id="tableSearch" />
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <!-- User Dropdown -->
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Total Permissions</span>
+                                                <h3 class="mb-0">{{ page_obj.paginator.count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-primary rounded p-3">
+                                                    <i class="bx bx-key bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Active Now</span>
+                                                <h3 class="mb-0">{{ active_permissions|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-success rounded p-3">
+                                                    <i class="bx bx-check-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Expiring Soon</span>
+                                                <h3 class="mb-0">{{ expiring_soon|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-warning rounded p-3">
+                                                    <i class="bx bx-time bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Zones Covered</span>
+                                                <h3 class="mb-0">{{ zones_covered|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-info rounded p-3">
+                                                    <i class="bx bx-map bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Table Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h5 class="card-title mb-0">Access Permissions</h5>
+                                    <small class="text-muted">Manage who has access to which zones</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <!-- Export Dropdown -->
+                                   
+                                </div>
+                                    
+                                                                        
+                                    <!-- Add Permission Button -->
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPermissionModal">
+                                        <i class="bx bx-plus me-1"></i> Add Permission
+                                    </button>
+                                </div>
+                            
+                            
+                            <!-- Filters Row -->
+                            <div class="card-body border-bottom">
+                                <form method="GET" id="filterForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Date Range</label>
+                                            <input type="text" class="form-control" id="dateRange" name="date_range" 
+                                                placeholder="Select date range">
+                                            <input type="hidden" name="start_date" id="startDate" value="{{ request.GET.start_date }}">
+                                            <input type="hidden" name="end_date" id="endDate" value="{{ request.GET.end_date }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Result</label>
+                                            <select class="form-select" name="result" id="filterResult">
+                                                <option value="">All</option>
+                                                {% for value, label in result_choices %}
+                                                <option value="{{ value }}" {% if request.GET.result == value %}selected{% endif %}>
+                                                    {{ label }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Zone</label>
+                                            <select class="form-select" name="zone_id" id="filterZone">
+                                                <option value="">All Zones</option>
+                                                {% for zone in zones %}
+                                                <option value="{{ zone.id }}" {% if request.GET.zone_id|add:"0" == zone.id %}selected{% endif %}>
+                                                    {{ zone.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label text-muted small">Person ID</label>
+                                            <input type="text" class="form-control" name="person_id" id="filterPerson" 
+                                                placeholder="Person ID/Code" value="{{ request.GET.person_id }}">
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end gap-2">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="bx bx-search"></i> Filter
+                                            </button>
+                                            <a href="{% url 'access:permission_list' %}" class="btn btn-secondary">
+                                                <i class="bx bx-reset"></i>
+                                            </a>
+                                                <!-- Export Dropdown - Integrated to match UI -->
+                                                
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                            <!-- Permissions Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="permissionsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Person/Group</th>
+                                            <th>Zone</th>
+                                            <th>Person Type</th>
+                                            <th>Valid Period</th>
+                                            <th>Access Schedule</th>
+                                            <th>Priority</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for permission in permissions %}
+                                        <tr data-permission-id="{{ permission.id }}">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-user-circle me-2 text-primary"></i>
+                                                    <div>
+                                                        
+                                                        {% if permission.group %}
+                                                        <br><small class="text-muted">Group: {{ permission.group.name }}</small>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-building me-1 text-muted"></i>
+                                                    {{ permission.zone.name }}
+                                                    <small class="text-muted ms-1">({{ permission.zone.get_zone_type_display }})</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if permission.person_type %}
+                                                <span class="person-type-badge person-type-{{ permission.person_type }}">
+                                                    {{ permission.get_person_type_display }}
+                                                </span>
+                                                {% else %}
+                                                <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="small">
+                                                    <div><strong>From:</strong> {{ permission.valid_from|date:"Y-m-d"|default:"—" }}</div>
+                                                    <div><strong>To:</strong> {{ permission.valid_until|date:"Y-m-d"|default:"—" }}</div>
+                                                    {% if permission.valid_until and permission.valid_until < now %}
+                                                    <span class="badge bg-danger mt-1">Expired</span>
+                                                    {% elif permission.valid_until and permission.valid_until|date:"Y-m-d" == now|date:"Y-m-d" %}
+                                                    <span class="badge bg-warning mt-1">Expires Today</span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if permission.access_schedule %}
+                                                <span class="badge bg-label-info">
+                                                    <i class="bx bx-time"></i> {{ permission.access_schedule }}
+                                                </span>
+                                                {% else %}
+                                                <span class="text-muted">24/7</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="priority-badge priority-{{ permission.priority|lower }}">
+                                                    {{ permission.get_priority_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if permission.is_active %}
+                                                    {% if permission.valid_until and permission.valid_until < now %}
+                                                    <span class="badge bg-secondary">Expired</span>
+                                                    {% else %}
+                                                    <span class="badge bg-success">Active</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewPermission({{ permission.id }})">
+                                                            <i class="bx bx-show-alt me-1"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editPermission({{ permission.id }})">
+                                                            <i class="bx bx-edit-alt me-1"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="togglePermissionStatus({{ permission.id }})">
+                                                            <i class="bx bx-power-off me-1"></i> 
+                                                            {% if permission.is_active %}Deactivate{% else %}Activate{% endif %}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5">
+                                                <i class="bx bx-key bx-lg text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted">No permissions found</h6>
+                                                <p class="text-muted small">Click "Add Permission" to grant access</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="bx bx-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                Next <i class="bx bx-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODALS -->
+    <!-- ============================================ -->
+
+    <!-- Add Permission Modal (Backdrop Modal - Static) -->
+    <div class="modal fade" id="addPermissionModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addPermissionForm" method="POST" action="{% url 'access:permission_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add Permission</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required">Zone</label>
+                                <select name="zone" class="form-select" required>
+                                    <option value="">Select Zone</option>
+                                    {% for zone in zones %}
+                                    <option value="{{ zone.id }}">{{ zone.name }} ({{ zone.get_zone_type_display }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Person Type</label>
+                                <select name="person_type" class="form-select" id="personTypeSelect">
+                                    <option value="">All Types</option>
+                                    {% for value, label in person_types %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Specific Person</label>
+                                <select name="specific_person" class="form-select" id="specificPersonSelect">
+                                    <option value="">Select Person (Optional)</option>
+                                </select>
+                                <small class="text-muted">Leave empty to apply to all persons of selected type</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Group</label>
+                                <select name="group" class="form-select">
+                                    <option value="">Select Group (Optional)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Valid From</label>
+                                <input type="datetime-local" name="valid_from" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Valid Until</label>
+                                <input type="datetime-local" name="valid_until" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Access Schedule</label>
+                                <select name="access_schedule" class="form-select">
+                                    <option value="">24/7 (Always)</option>
+                                    <option value="weekdays_9_5">Weekdays 9 AM - 5 PM</option>
+                                    <option value="weekdays_only">Weekdays Only</option>
+                                    <option value="weekends_only">Weekends Only</option>
+                                    <option value="custom">Custom Schedule</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Priority Level</label>
+                                <select name="priority" class="form-select">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="requires_escort" class="form-check-input" id="requiresEscort">
+                                    <label class="form-check-label" for="requiresEscort">Requires Escort</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Grant Permission</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Permission Modal (Scrollable Modal) -->
+    <div class="modal fade" id="viewPermissionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Permission Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewPermissionContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Permission Modal -->
+    <div class="modal fade" id="editPermissionModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit me-2"></i>Edit Permission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editPermissionContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        // Toastr configuration
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        // Show messages
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        // Initialize DataTable
+        let dataTable;
+        $(document).ready(function() {
+            dataTable = $('#permissionsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[0, 'asc']],
+                language: { emptyTable: "No permissions found" }
+            });
+            
+            // Initialize Select2
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#addPermissionModal')
+            });
+        });
+        
+        // Search functionality
+        $('#tableSearch').on('keyup', function() {
+            dataTable.search(this.value).draw();
+        });
+        
+        // Filter functionality
+        function applyFilters() {
+            const zoneId = $('#filterZone').val();
+            const personType = $('#filterPersonType').val();
+            const status = $('#filterStatus').val();
+            
+            let url = new URL(window.location.href);
+            if (zoneId) url.searchParams.set('zone_id', zoneId);
+            else url.searchParams.delete('zone_id');
+            if (personType) url.searchParams.set('person_type', personType);
+            else url.searchParams.delete('person_type');
+            if (status === 'active') url.searchParams.set('status', 'active');
+            else if (status === 'expired') url.searchParams.set('status', 'expired');
+            else url.searchParams.delete('status');
+            
+            window.location.href = url.toString();
+        }
+        
+        $('#filterZone, #filterPersonType, #filterStatus').on('change', applyFilters);
+        
+        $('#clearFiltersBtn').on('click', function() {
+            window.location.href = window.location.pathname;
+        });
+        
+        // Export functions
+        $('#exportExcelBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-excel').trigger();
+        });
+        
+        $('#exportCSVBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-csv').trigger();
+        });
+        
+        $('#printTableBtn').on('click', function(e) {
+            e.preventDefault();
+            dataTable.button('.buttons-print').trigger();
+        });
+        
+        // Add buttons
+        new $.fn.dataTable.Buttons(dataTable, {
+            buttons: [
+                { extend: 'excel', text: 'Excel', filename: 'permissions_export' },
+                { extend: 'csv', text: 'CSV', filename: 'permissions_export' },
+                { extend: 'print', text: 'Print' }
+            ]
+        });
+        
+        // Load persons based on person type
+        $('#personTypeSelect').on('change', function() {
+            const personType = $(this).val();
+            const personSelect = $('#specificPersonSelect');
+            
+            if (personType) {
+                $.get(`/api/persons/by-type/${personType}/`, function(data) {
+                    let options = '<option value="">Select Person (Optional)</option>';
+                    data.persons.forEach(person => {
+                        options += `<option value="${person.id}">${person.name} - ${person.email || ''}</option>`;
+                    });
+                    personSelect.html(options);
+                });
+            } else {
+                personSelect.html('<option value="">Select Person (Optional)</option>');
+            }
+        });
+        
+        // Permission CRUD Functions
+        function viewPermission(permissionId) {
+            $('#viewPermissionModal').modal('show');
+            $('#viewPermissionContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/permissions/${permissionId}/detail/`, function(data) {
+                $('#viewPermissionContent').html(data);
+            }).fail(function() {
+                $('#viewPermissionContent').html('<div class="alert alert-danger m-3">Failed to load permission details.</div>');
+            });
+        }
+        
+        function editPermission(permissionId) {
+            $('#editPermissionModal').modal('show');
+            $('#editPermissionContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/permissions/${permissionId}/edit/`, function(data) {
+                $('#editPermissionContent').html(data);
+            }).fail(function() {
+                $('#editPermissionContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+            });
+        }
+        
+        function togglePermissionStatus(permissionId) {
+            if (confirm('Are you sure you want to toggle this permission?')) {
+                $.post(`/access/permissions/${permissionId}/toggle-status/`, {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success('Permission status updated');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.error || 'Failed to update');
+                    }
+                })
+                .fail(function() {
+                    toastr.error('An error occurred');
+                });
+            }
+        }
+        
+        // Handle Add Permission Form Submission
+        $('#addPermissionForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
+            
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Creating...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addPermissionModal').modal('hide');
+                        toastr.success('Permission granted successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        toastr.error(response.error || 'Failed to create permission');
+                        submitBtn.prop('disabled', false).html('Grant Permission');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'An error occurred';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    toastr.error(errorMsg);
+                    submitBtn.prod('disabled', false).html('Grant Permission');
+                }
+            });
+        });
+        
+        // Active menu item
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-sub .menu-item').forEach(item => item.classList.remove('active'));
+            
+            const menuLinks = document.querySelectorAll('.menu-link');
+            menuLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);') {
+                    if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) {
+                        const menuItem = link.closest('.menu-item');
+                        if (menuItem) menuItem.classList.add('active');
+                        
+                        const parentSub = link.closest('.menu-sub');
+                        if (parentSub) {
+                            const parentMenuItem = parentSub.closest('.menu-item');
+                            if (parentMenuItem) {
+                                parentMenuItem.classList.add('active');
+                                const parentSubMenu = parentMenuItem.querySelector('.menu-sub');
+                                if (parentSubMenu) parentSubMenu.style.display = 'block';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+
+        // ============================================
+            // VIEW PERMISSION (Modal, no redirect)
+            // ============================================
+            function viewPermission(permissionId) {
+                $('#viewPermissionModal').modal('show');
+                $('#viewPermissionContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+                
+                $.get(`/access/permissions/${permissionId}/detail/`, function(response) {
+                    if (response.success) {
+                        $('#viewPermissionContent').html(response.html);
+                    } else {
+                        $('#viewPermissionContent').html('<div class="alert alert-danger m-3">Failed to load permission details.</div>');
+                    }
+                }).fail(function() {
+                    $('#viewPermissionContent').html('<div class="alert alert-danger m-3">Failed to load permission details.</div>');
+                });
+            }
+
+        // ============================================
+        // EDIT PERMISSION (Load form via AJAX, submit via AJAX)
+        // ============================================
+        function editPermission(permissionId) {
+            $('#editPermissionModal').modal('show');
+            $('#editPermissionContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/access/permissions/${permissionId}/edit-form/`, function(response) {
+                if (response.success) {
+                    $('#editPermissionContent').html(response.html);
+                } else {
+                    $('#editPermissionContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+                }
+            }).fail(function() {
+                $('#editPermissionContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+            });
+        }
+
+        // ============================================
+        // TOGGLE PERMISSION STATUS (AJAX)
+        // ============================================
+        function togglePermissionStatus(permissionId) {
+            if (confirm('Are you sure you want to toggle this permission\'s status?')) {
+                $.post(`/access/permissions/${permissionId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Permission status updated');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.error || 'Failed to update');
+                    }
+                })
+                .fail(function() {
+                    toastr.error('An error occurred');
+                });
+            }
+        }
+    </script>
+   
+</body>
+</html>

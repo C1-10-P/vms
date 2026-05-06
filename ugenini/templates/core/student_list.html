@@ -1,0 +1,696 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Students - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .status-active { background-color: #e8f5e9; color: #2e7d32; }
+        .status-graduated { background-color: #e3f2fd; color: #1565c0; }
+        .status-inactive { background-color: #ffebee; color: #c62828; }
+        .status-suspended { background-color: #fff3e0; color: #e65100; }
+        .status-probation { background-color: #f3e5f5; color: #6a1b9a; }
+        .status-withdrawn { background-color: #eceff1; color: #455a64; }
+        .status-deferred { background-color: #fff8e1; color: #f57c00; }
+        .year-badge {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            border-radius: 0.25rem;
+            background-color: #e0e0e0;
+            color: #424242;
+        }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+        .student-search {
+            position: relative;
+        }
+        .student-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .student-search-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .student-search-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search students..." id="tableSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Students</span><h3 class="mb-0">{{ page_obj.paginator.count|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-user bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active</span><h3 class="mb-0 text-success">{{ active_count|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Graduating</span><h3 class="mb-0 text-warning">{{ graduating_count|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-trending-up bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Programs</span><h3 class="mb-0">{{ programs_count|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-book bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end align-items-center mb-3 flex-wrap gap-3">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bx bx-download me-1"></i> Export
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                    <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                <i class="bx bx-plus me-1"></i> Add Student
+                            </button>
+                        </div>
+
+                        <!-- Students Table -->
+                            <div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover" id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Reg Number</th>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Program</th>
+                    <th>Current Year</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for student in students %}
+                <tr>
+
+                    <!-- Reg Number -->
+                    <td>
+                        {{ student.student_reg_number|default:"—" }}
+                    </td>
+
+                    <!-- Name -->
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-2">
+                                <i class="bx bx-user text-primary"></i>
+                            </div>
+                            <div>
+                                <strong>
+                                    {{ student.person.full_name|default:"—" }}
+                                </strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ student.person.email|default:"—" }}
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Email -->
+                    <td>
+                        {{ student.person.email|default:"—" }}
+                    </td>
+
+                    <!-- Program -->
+                    <td>
+                        {{ student.program.code|default:"—" }}
+                    </td>
+
+                    <!-- Year -->
+                    <td>
+                        <span class="year-badge">
+                            Year {{ student.current_year|default:"—" }}
+                        </span>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        <span class="status-badge {{ student.status_class }}">
+                            {{ student.status_label }}
+                        </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button type="button"
+                                    class="btn p-0 dropdown-toggle hide-arrow"
+                                    data-bs-toggle="dropdown">
+                                <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+
+                            <div class="dropdown-menu dropdown-menu-end">
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="viewStudent({{ student.id }})">
+                                    <i class="bx bx-show-alt me-1"></i>
+                                    View
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="editStudent({{ student.id }})">
+                                    <i class="bx bx-edit-alt me-1"></i>
+                                    Edit
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+
+                                <a class="dropdown-item text-danger"
+                                   href="javascript:void(0);"
+                                   onclick="toggleStudentStatus({{ student.id }})">
+                                    <i class="bx bx-power-off me-1"></i>
+                                    {% if student.is_active %}
+                                        Deactivate
+                                    {% else %}
+                                        Activate
+                                    {% endif %}
+                                </a>
+
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="bx bx-user bx-lg text-muted mb-3 d-block"></i>
+                        <h6 class="text-muted">No students found</h6>
+                        <p class="text-muted small">
+                            Click "Add Student" to create your first student record
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav>
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a></li>
+                                        {% endif %}
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADD STUDENT MODAL (Complete Form) -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="addStudentModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addStudentForm" method="POST" action="{% url 'core:student_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add New Student</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <!-- Person Selection -->
+                            <div class="col-12">
+                                <label class="form-label required">Student Name</label>
+                                <div class="student-search">
+                                    <input type="text" class="form-control" id="studentSearch" placeholder="Search or select person" autocomplete="off">
+                                    <input type="hidden" name="person" id="studentId">
+                                    <div class="student-search-results" id="studentSearchResults"></div>
+                                </div>
+                                <small class="text-muted">Start typing to search for existing person</small>
+                            </div>
+
+                            <!-- Registration Number -->
+                            <div class="col-md-6">
+                                <label class="form-label">Registration Number</label>
+                                <input type="text" name="student_reg_number" class="form-control" placeholder="e.g., STU2024001">
+                            </div>
+
+                            <!-- Program -->
+                            <div class="col-md-6">
+                                <label class="form-label required">Program</label>
+                                <select name="program" class="form-select" required>
+                                    <option value="">Select Program</option>
+                                    {% for program in programs %}
+                                    <option value="{{ program.id }}">{{ program.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Current Year & Semester -->
+                            <div class="col-md-4">
+                                <label class="form-label">Current Year</label>
+                                <input type="number" name="current_year" class="form-control" min="1" max="6" value="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Current Semester</label>
+                                <input type="number" name="current_semester" class="form-control" min="1" max="3" value="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mode of Study</label>
+                                <select name="mode_of_study" class="form-select">
+                                    <option value="full_time">Full Time</option>
+                                    <option value="part_time">Part Time</option>
+                                    <option value="distance">Distance Learning</option>
+                                    <option value="evening">Evening</option>
+                                    <option value="online">Online</option>
+                                </select>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="col-md-6">
+                                <label class="form-label">Admission Date</label>
+                                <input type="date" name="admission_date" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expected Graduation</label>
+                                <input type="date" name="expected_graduation" class="form-control">
+                            </div>
+
+                            <!-- Status & Supervisor -->
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="active">Active</option>
+                                    <option value="probation">Probation</option>
+                                    <option value="suspended">Suspended</option>
+                                    <option value="graduated">Graduated</option>
+                                    <option value="withdrawn">Withdrawn</option>
+                                    <option value="deferred">Deferred</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Supervisor</label>
+                                <select name="supervisor" class="form-select">
+                                    <option value="">Select Supervisor</option>
+                                    {% for staff in staff_members %}
+                                    <option value="{{ staff.id }}">{{ staff.person.get_full_name|default:staff.person.first_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Class Representative -->
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="class_representative" class="form-check-input" id="classRep">
+                                    <label class="form-check-label" for="classRep">Class Representative</label>
+                                </div>
+                            </div>
+
+                            <!-- Disability Information -->
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" name="has_disability" class="form-check-input" id="hasDisability">
+                                    <label class="form-check-label" for="hasDisability">Has Disability</label>
+                                </div>
+                            </div>
+                            <div class="col-12" id="disabilityField" style="display: none;">
+                                <label class="form-label">Disability Description</label>
+                                <textarea name="disability_description" class="form-control" rows="2" placeholder="Please describe the disability..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Proceed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Student Modal -->
+    <div class="modal fade" id="viewStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Student Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewStudentContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn" style="display: none;">Edit Student</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div class="modal fade" id="editStudentModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Edit Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="editStudentContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let dataTable, currentStudentId = null;
+        let studentsData = [];
+        
+        $(document).ready(function() {
+            dataTable = $('#studentsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[1, 'asc']],
+                language: { emptyTable: "No students found" }
+            });
+            
+            $('.form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addStudentModal')});
+            
+            // Disability field toggle
+            $('#hasDisability').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#disabilityField').show();
+                } else {
+                    $('#disabilityField').hide();
+                }
+            });
+            
+            // Load persons for search
+            $.get('/classroom/api/students/', function(data) {
+                studentsData = data;
+            });
+            
+            // Student search functionality
+            $('#studentSearch').on('keyup', function() {
+                const query = $(this).val().toLowerCase();
+                if (query.length < 2) {
+                    $('#studentSearchResults').hide();
+                    return;
+                }
+                
+                const results = studentsData.filter(s => 
+                    s.name.toLowerCase().includes(query) || 
+                    s.reg_number.toLowerCase().includes(query)
+                ).slice(0, 10);
+                
+                if (results.length > 0) {
+                    let html = '';
+                    results.forEach(s => {
+                        html += `<div class="student-search-item" data-id="${s.id}" data-name="${s.name}" data-reg="${s.reg_number}">
+                            <strong>${escapeHtml(s.name)}</strong><br>
+                            <small class="text-muted">Reg: ${escapeHtml(s.reg_number)}</small>
+                        </div>`;
+                    });
+                    $('#studentSearchResults').html(html).show();
+                } else {
+                    $('#studentSearchResults').hide();
+                }
+            });
+            
+            $(document).on('click', '.student-search-item', function() {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                $('#studentSearch').val(name);
+                $('#studentId').val(id);
+                $('#studentSearchResults').hide();
+            });
+            
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.student-search').length) {
+                    $('#studentSearchResults').hide();
+                }
+            });
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {buttons: [{extend:'excel',filename:'students_export'},{extend:'csv',filename:'students_export'},{extend:'print',title:'Students Report'}]});
+        
+        function viewStudent(studentId) {
+            currentStudentId = studentId;
+            $('#viewStudentModal').modal('show');
+            $('#viewStudentContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $('#editFromViewBtn').hide();
+            
+            $.get(`/core/students/${studentId}/detail/`, function(data) {
+                $('#viewStudentContent').html(data);
+                $('#editFromViewBtn').show().attr('onclick', `editStudent(${studentId})`);
+            }).fail(function() { $('#viewStudentContent').html('<div class="alert alert-danger m-3">Failed to load student details.</div>'); });
+        }
+        
+        function editStudent(studentId) {
+            $('#viewStudentModal').modal('hide');
+            $('#editStudentModal').modal('show');
+            $('#editStudentContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/core/students/${studentId}/edit/`, function(data) {
+                $('#editStudentContent').html(data);
+                $('#editStudentContent .form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#editStudentModal') });
+            }).fail(function() { $('#editStudentContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>'); });
+        }
+        
+        function toggleStudentStatus(studentId) {
+            if (confirm('Are you sure you want to toggle this student status?')) {
+                $.post(`/core/students/${studentId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) { if (response.success) { toastr.success('Student status updated'); setTimeout(() => location.reload(), 1000); } else { toastr.error('Failed to update'); } })
+                .fail(function() { toastr.error('An error occurred'); });
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        $('#addStudentForm').on('submit', function(e) {
+            if (!$('#studentId').val()) {
+                e.preventDefault();
+                toastr.error('Please select a valid student');
+                return false;
+            }
+            return true;
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

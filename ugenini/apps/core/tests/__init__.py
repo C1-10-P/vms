@@ -1,0 +1,1 @@
+from apps.classroom.models import ClassAttendance

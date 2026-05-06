@@ -1,0 +1,592 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Persons - Ugenini VMS</title>
+    <meta name="description" content="Manage Persons" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .person-type-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .type-student { background-color: #e3f2fd; color: #1565c0; }
+        .type-staff { background-color: #e8f5e9; color: #2e7d32; }
+        .type-faculty { background-color: #f3e5f5; color: #6a1b9a; }
+        .type-visitor { background-color: #fff3e0; color: #e65100; }
+        .type-contractor { background-color: #ffebee; color: #c62828; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search persons..." id="tableSearch" />
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards - 4 cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Total Persons</span>
+                                                <h3 class="mb-0">{{ page_obj.paginator.count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-primary rounded p-3">
+                                                    <i class="bx bx-user bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Students</span>
+                                                <h3 class="mb-0">{{ student_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-info rounded p-3">
+                                                    <i class="bx bx-graduation bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Staff</span>
+                                                <h3 class="mb-0">{{ staff_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-success rounded p-3">
+                                                    <i class="bx bx-briefcase bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span class="text-muted mb-1 d-block">Active</span>
+                                                <h3 class="mb-0">{{ active_count|default:0 }}</h3>
+                                            </div>
+                                            <div class="avatar flex-shrink-0">
+                                                <span class="badge bg-label-warning rounded p-3">
+                                                    <i class="bx bx-check-circle bx-sm"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Persons Table Card -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h5 class="card-title mb-0">Persons Directory</h5>
+                                    <small class="text-muted">Manage all persons in the system</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bx bx-download me-1"></i> Export
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                            <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                            <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPersonModal">
+                                        <i class="bx bx-plus me-1"></i> Add Person
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters Row -->
+                            <div class="card-body border-bottom">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Person Type</label>
+                                        <select class="form-select" id="filterPersonType">
+                                            <option value="">All Types</option>
+                                            <option value="student">Student</option>
+                                            <option value="staff">Staff</option>
+                                            <option value="faculty">Faculty</option>
+                                            <option value="visitor">Visitor</option>
+                                            <option value="contractor">Contractor</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Status</label>
+                                        <select class="form-select" id="filterStatus">
+                                            <option value="all">All</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-secondary w-100" id="clearFiltersBtn">
+                                            <i class="bx bx-reset"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Persons Table - 6 Columns Only -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="personsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Full Name</th>
+                                            <th>Email</th>
+                                            <th>Person Type</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for person in persons %}
+                                        <tr>
+                                            <td>{{ person.person_id|default:person.id }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-user me-2 text-primary"></i>
+                                                    <strong>{{ person.full_name|default:"—" }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>{{ person.email|default:"—" }}</td>
+                                            <td>
+                                                <span class="person-type-badge type-{{ person.person_type }}">
+                                                    {{ person.get_person_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if person.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="{% url 'core:person_detail' person.id %}">
+                                                            <i class="bx bx-show-alt me-1"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editPerson({{ person.id }})">
+                                                            <i class="bx bx-edit-alt me-1"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="togglePersonStatus({{ person.id }})">
+                                                            <i class="bx bx-power-off me-1"></i> 
+                                                            {% if person.is_active %}Deactivate{% else %}Activate{% endif %}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <i class="bx bx-user bx-lg text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted">No persons found</h6>
+                                                <p class="text-muted small">Click "Add Person" to create your first person</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                <i class="bx bx-chevron-left"></i> Previous
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                            </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                                Next <i class="bx bx-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Person Modal -->
+    <div class="modal fade" id="addPersonModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addPersonForm" method="POST" action="{% url 'core:person_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add New Person</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label required">Person Type</label>
+                                <select name="person_type" class="form-select" required>
+                                    <option value="">Select Type</option>
+                                    <option value="student">Student</option>
+                                    <option value="staff">Staff</option>
+                                    <option value="visitor">Visitor</option>
+                                    <option value="contractor">Contractor</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text" name="first_name" class="form-control" placeholder="First name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text" name="last_name" class="form-control" placeholder="Last name">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label required">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="person@example.com" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" name="phone" class="form-control" placeholder="+250 XXX XXX XXX">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" name="is_active" class="form-check-input" checked>
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Proceed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Person Modal -->
+    <div class="modal fade" id="editPersonModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Edit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editPersonContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+
+                {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'danger' %}
+                    toastr.error('{{ message|escapejs }}');
+                {% elif message.tags == 'debug' %}
+                    toastr.info('{{ message|escapejs }}');
+                {% else %}
+                    toastr.{{ message.tags|default:'success' }}('{{ message|escapejs }}');
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        let dataTable;
+        
+        $(document).ready(function() {
+            dataTable = $('#personsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[1, 'asc']],
+                language: { emptyTable: "No persons found" }
+            });
+            
+            $('.form-select').select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addPersonModal') });
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        function applyFilters() {
+            let url = new URL(window.location.href);
+            if ($('#filterPersonType').val()) url.searchParams.set('person_type', $('#filterPersonType').val());
+            else url.searchParams.delete('person_type');
+            window.location.href = url.toString();
+        }
+        
+        $('#filterPersonType, #filterStatus').on('change', applyFilters);
+        $('#clearFiltersBtn').on('click', function() { window.location.href = window.location.pathname; });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {
+            buttons: [
+                { extend: 'excel', filename: 'persons_export' },
+                { extend: 'csv', filename: 'persons_export' },
+                { extend: 'print', title: 'Persons Report' }
+            ]
+        });
+        
+        function editPerson(personId) {
+            $('#editPersonModal').modal('show');
+            $('#editPersonContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $.get(`/core/persons/${personId}/edit/`, function(data) {
+                $('#editPersonContent').html(data);
+                $('#editPersonContent .form-select').select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#editPersonModal') });
+            }).fail(function() { $('#editPersonContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>'); });
+        }
+        
+        function togglePersonStatus(personId) {
+            if (confirm('Are you sure you want to toggle this person\'s status?')) {
+                $.post(`/core/persons/${personId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) { if (response.success) { toastr.success('Status updated'); setTimeout(() => location.reload(), 1000); } else { toastr.error('Failed'); } })
+                .fail(function() { toastr.error('An error occurred'); });
+            }
+        }
+        
+       $('#addPersonForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = form.find('button[type="submit"]');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // If your view sends a message via Django Messages, 
+                    // just reload. The top script will handle it.
+                    location.reload(); 
+                } else {
+                    toastr.error(response.error || 'Validation failed');
+                    btn.prop('disabled', false).html('Create Person');
+                }
+            },
+            error: function(xhr) {
+                // Check if it's a 403 (CSRF) or 500 (Internal Error)
+                console.error(xhr.responseText);
+                toastr.error('Server error: ' + xhr.status);
+                btn.prop('disabled', false).html('Create Person');
+            }
+        });
+    });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Academic Units - Ugenini VMS</title>
+    <meta name="description" content="Manage Academic Units/Courses" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .status-active { background-color: #e8f5e9; color: #2e7d32; }
+        .status-inactive { background-color: #ffebee; color: #c62828; }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search units..." id="tableSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Units</span><h3 class="mb-0">{{ units|length|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-book bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Departments</span><h3 class="mb-0">{{ departments|length|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Units</span><h3 class="mb-0 text-success">{{ units|length|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Classes</span><h3 class="mb-0">{{ total_classes|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-group bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                            <div class="d-flex gap-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bx bx-download me-1"></i> Export
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                        <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUnitModal">
+                                <i class="bx bx-plus me-1"></i> Add Unit
+                            </button>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Department</label>
+                                        <select class="form-select" id="filterDepartment">
+                                            <option value="">All Departments</option>
+                                            {% for department in departments %}
+                                            <option value="{{ department.id }}" {% if request.GET.department_id == department.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ department.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-secondary w-100" id="clearFiltersBtn">
+                                            <i class="bx bx-reset"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Units Table -->
+                          <div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover" id="unitsTable">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Unit Name</th>
+                    <th>Department</th>
+                    <th>Credit Hours</th>
+                    <th>Classes</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for unit in units %}
+                <tr>
+
+                    <!-- Code -->
+                    <td>
+                        <code>{{ unit.code|default:"—" }}</code>
+                    </td>
+
+                    <!-- Name -->
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="bx bx-book me-2 text-primary"></i>
+                            <strong>{{ unit.name|default:"—" }}</strong>
+                        </div>
+                    </td>
+
+                    <!-- Department -->
+                    <td>
+                        {{ unit.department.code|default:"—" }}
+                    </td>
+
+                    <!-- Credit Hours -->
+                    <td>
+                        {{ unit.credit_hours|default:"—" }}
+                    </td>
+
+                    <!-- Classes -->
+                    <td>
+                        <span class="badge bg-label-info">
+                            {{ unit.classes_count }}
+                        </span>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if unit.is_active %}
+                            <span class="status-badge status-active">Active</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button type="button"
+                                    class="btn p-0 dropdown-toggle hide-arrow"
+                                    data-bs-toggle="dropdown">
+                                <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+
+                            <div class="dropdown-menu dropdown-menu-end">
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="viewUnit({{ unit.id }})">
+                                    <i class="bx bx-show-alt me-1"></i>
+                                    View
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="editUnit({{ unit.id }})">
+                                    <i class="bx bx-edit-alt me-1"></i>
+                                    Edit
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+
+                                <a class="dropdown-item text-danger"
+                                   href="javascript:void(0);"
+                                   onclick="toggleUnitStatus({{ unit.id }})">
+                                    <i class="bx bx-power-off me-1"></i>
+                                    {% if unit.is_active %}
+                                        Deactivate
+                                    {% else %}
+                                        Activate
+                                    {% endif %}
+                                </a>
+
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="bx bx-book bx-lg text-muted mb-3 d-block"></i>
+                        <h6 class="text-muted">No academic units found</h6>
+                        <p class="text-muted small">
+                            Click "Add Unit" to create your first academic unit
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav>
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a></li>
+                                        {% endif %}
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Unit Modal -->
+    <div class="modal fade" id="addUnitModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addUnitForm" method="POST" action="{% url 'core:academic_unit_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add Academic Unit</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required">Code</label>
+                                <input type="text" name="code" class="form-control" placeholder="e.g., CS101" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required">Unit Name</label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g., Introduction to CS" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label required">Department</label>
+                                <select name="department" class="form-select" required>
+                                    <option value="">Select Department</option>
+                                    {% for department in departments %}
+                                    <option value="{{ department.id }}">{{ department.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Credit Hours</label>
+                                <input type="number" name="credit_hours" class="form-control" value="3" min="1" max="12">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact Hours</label>
+                                <input type="number" name="contact_hours" class="form-control" value="3" min="1" max="24">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Course description..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-2">
+                                    <input type="checkbox" name="is_active" class="form-check-input" checked>
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Proceed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Unit Modal -->
+    <div class="modal fade" id="viewUnitModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Unit Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewUnitContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn" style="display: none;">Edit Unit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Unit Modal -->
+    <div class="modal fade" id="editUnitModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Edit Unit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="editUnitContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let dataTable, currentUnitId = null;
+        
+        $(document).ready(function() {
+            dataTable = $('#unitsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[0, 'asc']],
+                language: { emptyTable: "No academic units found" }
+            });
+            
+            $('.form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addUnitModal')});
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        function applyFilters() {
+            let url = new URL(window.location.href);
+            if ($('#filterDepartment').val()) url.searchParams.set('department_id', $('#filterDepartment').val());
+            else url.searchParams.delete('department_id');
+            window.location.href = url.toString();
+        }
+        
+        $('#filterDepartment').on('change', applyFilters);
+        $('#clearFiltersBtn').on('click', function() { window.location.href = window.location.pathname; });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {buttons: [{extend:'excel',filename:'academic_units_export'},{extend:'csv',filename:'academic_units_export'},{extend:'print',title:'Academic Units Report'}]});
+        
+        function viewUnit(unitId) {
+            currentUnitId = unitId;
+            $('#viewUnitModal').modal('show');
+            $('#viewUnitContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $('#editFromViewBtn').hide();
+            
+            $.get(`/core/academic-units/${unitId}/detail/`, function(data) {
+                $('#viewUnitContent').html(data);
+                $('#editFromViewBtn').show().attr('onclick', `editUnit(${unitId})`);
+            }).fail(function() { $('#viewUnitContent').html('<div class="alert alert-danger m-3">Failed to load unit details.</div>'); });
+        }
+        
+        function editUnit(unitId) {
+            $('#viewUnitModal').modal('hide');
+            $('#editUnitModal').modal('show');
+            $('#editUnitContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/core/academic-units/${unitId}/edit/`, function(data) {
+                $('#editUnitContent').html(data);
+                $('#editUnitContent .form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#editUnitModal') });
+            }).fail(function() { $('#editUnitContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>'); });
+        }
+        
+        function toggleUnitStatus(unitId) {
+            if (confirm('Are you sure you want to toggle this unit status?')) {
+                $.post(`/core/academic-units/${unitId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) { if (response.success) { toastr.success('Unit status updated'); setTimeout(() => location.reload(), 1000); } else { toastr.error('Failed to update'); } })
+                .fail(function() { toastr.error('An error occurred'); });
+            }
+        }
+        
+        $('#addUnitForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this), btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Creating...');
+            $.ajax({
+                url: form.attr('action'), method: 'POST', data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addUnitModal').modal('hide');
+                        toastr.success('Academic unit created successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else { toastr.error(response.error || 'Failed to create unit'); btn.prop('disabled', false).html('Create Unit'); }
+                }, error: function() { toastr.error('An error occurred'); btn.prop('disabled', false).html('Create Unit'); }
+            });
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

@@ -1,0 +1,812 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Access Maps - Ugenini VMS</title>
+    <meta name="description" content="Interactive Campus Map" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.5rem;
+            z-index: 1;
+        }
+        .legend {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-right: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .toggle-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background-color: #696cff;
+            color: white;
+            border-color: #696cff;
+        }
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .status-active { background-color: #e8f5e9; color: #2e7d32; }
+        .status-inactive { background-color: #ffebee; color: #c62828; }
+        .status-full { background-color: #ffebee; color: #c62828; }
+        .status-near-capacity { background-color: #fff3e0; color: #e65100; }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Sidebar Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo"><img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo"></span>
+                        <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+                <div class="menu-inner-shadow"></div>
+                <ul class="menu-inner py-1">
+                    <li class="menu-item"><a href="{% url 'dashboard:home' %}" class="menu-link"><i class="menu-icon tf-icons bx bx-home-circle"></i><div>Dashboard</div></a></li>
+                    <li class="menu-item active open"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-layout"></i><div>Access</div></a>
+                        <ul class="menu-sub" style="display: block;">
+                            <li class="menu-item"><a href="{% url 'access:zone_list' %}" class="menu-link"><div>Zones</div></a></li>
+                            <li class="menu-item active"><a href="{% url 'access:zone_map' %}" class="menu-link"><div>Maps</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:permission_list' %}" class="menu-link"><div>Permissions</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:log_list' %}" class="menu-link"><div>Logs</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:geofence_list' %}" class="menu-link"><div>Geofence</div></a></li>
+                        </ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-copy"></i><div>Classroom</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div>Roll Call</div></a></li><li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div>Enrollment</div></a></li><li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div>Sessions</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-cube-alt"></i><div>Core</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div>Colleges</div></a></li><li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div>Schools</div></a></li><li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div>Departments</div></a></li><li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div>Programs</div></a></li><li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div>Persons</div></a></li><li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div>Staff</div></a></li><li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div>Students</div></a></li><li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div>Units</div></a></li><li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div>Classes</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-collection"></i><div>Devices</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div>Edge Nodes</div></a></li><li class="menu-item"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div>Monitor</div></a></li><li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div>OTA</div></a></li><li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div>Firmware</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-box"></i><div>VMS</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link"><div>Visitors</div></a></li><li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link"><div>Check In</div></a></li><li class="menu-item"><a href="{% url 'vms:tracking' %}" class="menu-link"><div>Tracking</div></a></li><li class="menu-item"><a href="{% url 'vms:visitor_map' %}" class="menu-link"><div>Maps</div></a></li><li class="menu-item"><a href="{% url 'vms:session_list' %}" class="menu-link"><div>Sessions</div></a></li></ul>
+                    </li>
+                    <li class="menu-header small text-uppercase"><span class="menu-header-text">Settings</span></li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-dock-top"></i><div>Configurations</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'users:list' %}" class="menu-link"><div>Users</div></a></li><li class="menu-item"><a href="{% url 'users:role_list' %}" class="menu-link"><div>Roles</div></a></li></ul>
+                    </li>
+                </ul>
+            </aside>
+            <!-- / Sidebar -->
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-map fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Campus Access Map</span>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item me-3"><span class="badge bg-primary"><i class="bx bx-location-plus"></i> Interactive Map</span></li>
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Zones</span><h3 class="mb-0" id="totalZones">{{ zones|length|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Zones</span><h3 class="mb-0 text-success" id="activeZones">{{ active_zones|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Occupied</span><h3 class="mb-0" id="occupiedZones">{{ occupied_zones|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-user bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Capacity</span><h3 class="mb-0" id="totalCapacity">{{ total_capacity|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-group bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Toggle Buttons -->
+                        <div class="d-flex justify-content-end mb-3">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary toggle-view-btn active" id="toggleMapView">
+                                    <i class="bx bx-map me-1"></i> Map View
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary toggle-view-btn" id="toggleTableView">
+                                    <i class="bx bx-table me-1"></i> Table View
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary ms-2" onclick="toggleFullscreen()">
+                                <i class="bx bx-fullscreen"></i>
+                            </button>
+                        </div>
+
+                        <!-- Map Container (Full Width) -->
+                        <div id="mapContainer" class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div><h5 class="card-title mb-0"><i class="bx bx-map me-1"></i>Campus Map</h5><small class="text-muted">Interactive zones and access points</small></div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshMap()"><i class="bx bx-refresh"></i> Refresh</button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="centerMap()"><i class="bx bx-crosshair"></i> Center</button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="map"></div>
+                                <div class="legend p-2">
+                                    <strong>Legend:</strong><br>
+                                    <span class="legend-color" style="background: #28a745;"></span> Normal Access &nbsp;
+                                    <span class="legend-color" style="background: #fd7e14;"></span> Restricted &nbsp;
+                                    <span class="legend-color" style="background: #dc3545;"></span> High Security &nbsp;
+                                    <span class="legend-color" style="background: #ffc107;"></span> Near Capacity &nbsp;
+                                    <span class="legend-color" style="background: #6f42c1;"></span> Full &nbsp;
+                                    <span class="legend-color" style="background: #696cff;"></span> Classroom/Lab
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Container (Hidden by default) -->
+                        <div id="tableContainer" style="display: none;">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div><h5 class="card-title mb-0"><i class="bx bx-table me-1"></i>Zones List</h5><small class="text-muted">All access zones and their details</small></div>
+                                    <div class="d-flex gap-2">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                                                <i class="bx bx-download me-1"></i> Export
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                                <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                    <div class="table-responsive">
+    <table class="table table-hover" id="zonesTable">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Zone Name</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Capacity</th>
+                <th>Occupancy</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for zone in zones %}
+            <tr data-zone-id="{{ zone.id }}">
+
+                <!-- Code -->
+                <td>
+                    {{ zone.code|default:"—" }}
+                </td>
+
+                <!-- Name -->
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="bx bx-building me-2 text-primary"></i>
+                        <strong>{{ zone.name }}</strong>
+                    </div>
+                </td>
+
+                <!-- Type -->
+                <td>
+                    {{ zone.get_zone_type_display }}
+                </td>
+
+                <!-- Location -->
+                <td>
+                    {% if zone.building %}
+                        {{ zone.building }}
+                    {% endif %}
+                    {% if zone.room_number %}
+                        - Rm {{ zone.room_number }}
+                    {% endif %}
+                    {% if not zone.building and not zone.room_number %}
+                        —
+                    {% endif %}
+                </td>
+
+                <!-- Capacity -->
+                <td>
+                    {{ zone.capacity|default:"—" }}
+                </td>
+
+                <!-- Occupancy -->
+                <td>
+                    {% with capacity=zone.capacity|default:0 occupancy=zone.current_occupancy|default:0 %}
+                    <div>
+                        <div class="progress" style="height: 4px; width: 80px;">
+                            
+                            {% if capacity > 0 %}
+                                {% widthratio occupancy capacity 100 as occupancy_percent %}
+                            {% else %}
+                                {% with occupancy_percent=0 %}
+                                {% endwith %}
+                            {% endif %}
+
+                            <div class="progress-bar
+                                {% if occupancy_percent >= 100 %}
+                                    bg-danger
+                                {% elif occupancy_percent >= 80 %}
+                                    bg-warning
+                                {% else %}
+                                    bg-success
+                                {% endif %}"
+                                style="width: {{ occupancy_percent }}%">
+                            </div>
+                        </div>
+
+                        <small>
+                            {{ occupancy }}/{{ capacity|default:"∞" }}
+                        </small>
+                    </div>
+                    {% endwith %}
+                </td>
+
+                <!-- Status -->
+                <td>
+                    {% with capacity=zone.capacity|default:0 occupancy=zone.current_occupancy|default:0 %}
+                    {% if zone.is_active %}
+
+                        {% if capacity > 0 and occupancy >= capacity %}
+                            <span class="status-badge status-full">Full</span>
+
+                        {% elif capacity > 0 and occupancy >= capacity|add:"-20" %}
+                            <span class="status-badge status-near-capacity">Near Capacity</span>
+
+                        {% else %}
+                            <span class="status-badge status-active">Active</span>
+
+                        {% endif %}
+
+                    {% else %}
+                        <span class="status-badge status-inactive">Inactive</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+
+                <!-- Actions -->
+                <td class="text-end">
+                    <div class="dropdown">
+                        <button type="button"
+                                class="btn p-0 dropdown-toggle hide-arrow"
+                                data-bs-toggle="dropdown">
+                            <i class="bx bx-dots-vertical-rounded"></i>
+                        </button>
+
+                        <div class="dropdown-menu dropdown-menu-end">
+
+                            <a class="dropdown-item"
+                               href="javascript:void(0);"
+                               onclick="showZoneDetail({{ zone.id }})">
+                                <i class="bx bx-show-alt me-1"></i>
+                                View Details
+                            </a>
+
+                            <a class="dropdown-item"
+                               href="javascript:void(0);"
+                               onclick="centerOnZone({{ zone.id }})">
+                                <i class="bx bx-crosshair me-1"></i>
+                                Locate on Map
+                            </a>
+
+                        </div>
+                    </div>
+                </td>
+
+            </tr>
+
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">
+                    No zones available
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone Detail Modal (Scrollable) -->
+    <div class="modal fade" id="zoneDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Zone Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="zoneDetailContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" id="editZoneLink" class="btn btn-primary">Edit Zone</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let map, dataTable;
+        let zonesData = [
+            {% for zone in zones %}
+            {
+                id: {{ zone.id }},
+                name: "{{ zone.name|escapejs }}",
+                type: "{{ zone.zone_type }}",
+                typeDisplay: "{{ zone.get_zone_type_display|escapejs }}",
+                accessLevel: "{{ zone.access_level }}",
+                latitude: {{ zone.latitude|default:"null" }},
+                longitude: {{ zone.longitude|default:"null" }},
+                isActive: {{ zone.is_active|lower }},
+                currentOccupancy: {{ zone.current_occupancy|default:0 }},
+                capacity: {{ zone.capacity|default:100 }},
+                description: "{{ zone.description|escapejs|default:'' }}",
+                building: "{{ zone.building|escapejs|default:'' }}",
+                roomNumber: "{{ zone.room_number|escapejs|default:'' }}"
+            },
+            {% endfor %}
+        ];
+        
+        function getZoneColor(zone) {
+            if (!zone.isActive) return '#6c757d';
+            if (zone.currentOccupancy >= zone.capacity && zone.capacity > 0) return '#6f42c1';
+            if (zone.currentOccupancy > zone.capacity * 0.8) return '#ffc107';
+            if (zone.accessLevel === 'restricted') return '#fd7e14';
+            if (zone.accessLevel === 'high_security') return '#dc3545';
+            if (zone.type === 'classroom' || zone.type === 'lab') return '#696cff';
+            return '#28a745';
+        }
+        
+        function initMap() {
+            const center = [-1.286389, 36.817223];
+            map = L.map('map').setView(center, 14);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+            
+            zonesData.forEach(zone => {
+                if (zone.latitude && zone.longitude) {
+                    const color = getZoneColor(zone);
+                    const marker = L.circleMarker([zone.latitude, zone.longitude], {
+                        radius: 12,
+                        color: color,
+                        weight: 3,
+                        fillColor: color,
+                        fillOpacity: 0.6
+                    }).addTo(map);
+                    
+                    marker.bindTooltip(`
+                        <strong>${zone.name}</strong><br>
+                        ${zone.typeDisplay}<br>
+                        Occupancy: ${zone.currentOccupancy}/${zone.capacity}
+                    `, { sticky: true });
+                    
+                    marker.on('click', function() {
+                        showZoneDetail(zone.id);
+                    });
+                }
+            });
+            
+            L.control.scale().addTo(map);
+        }
+        
+        function showZoneDetail(zoneId) {
+            $('#zoneDetailModal').modal('show');
+            $('#zoneDetailContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            const zone = zonesData.find(z => z.id === zoneId);
+            if (zone) {
+                const color = getZoneColor(zone);
+                const occupancyPercent = zone.capacity > 0 ? Math.round((zone.currentOccupancy / zone.capacity) * 100) : 0;
+                let occupancyClass = '';
+                if (occupancyPercent >= 100) occupancyClass = 'danger';
+                else if (occupancyPercent >= 80) occupancyClass = 'warning';
+                else occupancyClass = 'success';
+                
+                let statusClass = zone.isActive ? 'success' : 'secondary';
+                let statusText = zone.isActive ? 'Active' : 'Inactive';
+                
+                const html = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Zone Name</div>
+                            <div class="detail-value"><strong>${escapeHtml(zone.name)}</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value"><span class="badge bg-${statusClass}">${statusText}</span></div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Zone Type</div>
+                            <div class="detail-value">${escapeHtml(zone.typeDisplay)}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Access Level</div>
+                            <div class="detail-value">${escapeHtml(zone.accessLevel) || 'Standard'}</div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Location</div>
+                            <div class="detail-value">
+                                ${zone.building ? `<i class="bx bx-building me-1"></i> ${escapeHtml(zone.building)}<br>` : ''}
+                                ${zone.roomNumber ? `<i class="bx bx-door-open me-1"></i> Room ${escapeHtml(zone.roomNumber)}` : ''}
+                                ${!zone.building && !zone.roomNumber ? '—' : ''}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Coordinates</div>
+                            <div class="detail-value">
+                                <small>${zone.latitude}, ${zone.longitude}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Occupancy</div>
+                            <div class="detail-value">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>${zone.currentOccupancy} / ${zone.capacity}</span>
+                                    <span>${occupancyPercent}%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-${occupancyClass}" style="width: ${occupancyPercent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Availability</div>
+                            <div class="detail-value">
+                                ${zone.capacity - zone.currentOccupancy > 0 ? 
+                                    `<span class="text-success">${zone.capacity - zone.currentOccupancy} spots available</span>` : 
+                                    '<span class="text-danger">Full</span>'}
+                            </div>
+                        </div>
+                    </div>
+                    ${zone.description ? `
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="detail-label">Description</div>
+                            <div class="detail-value">${escapeHtml(zone.description)}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <hr>
+                    <h6 class="mb-3">Quick Actions</h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="centerOnZone(${zone.id})">
+                            <i class="bx bx-crosshair me-1"></i> Center on Map
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewZoneAccessLogs(${zone.id})">
+                            <i class="bx bx-history me-1"></i> Access Logs
+                        </button>
+                    </div>
+                `;
+                $('#zoneDetailContent').html(html);
+                $('#editZoneLink').attr('href', `/access/zones/${zone.id}/edit/`);
+            }
+        }
+        
+        function centerOnZone(zoneId) {
+            const zone = zonesData.find(z => z.id === zoneId);
+            if (zone && zone.latitude && zone.longitude) {
+                if (map) {
+                    map.setView([zone.latitude, zone.longitude], 18);
+                }
+                $('#zoneDetailModal').modal('hide');
+                $('#toggleMapView').click();
+                toastr.success(`Centered on ${zone.name}`);
+            }
+        }
+        
+        function viewZoneAccessLogs(zoneId) {
+            window.location.href = `/access/access-logs/?zone_id=${zoneId}`;
+        }
+        
+        function refreshMap() {
+            if (map) {
+                map.invalidateSize();
+            }
+            location.reload();
+        }
+        
+        function centerMap() {
+            if (map) {
+                map.setView([-1.286389, 36.817223], 14);
+            }
+        }
+        
+        function toggleFullscreen() {
+            const mapContainer = document.getElementById('mapContainer');
+            if (!document.fullscreenElement) {
+                mapContainer.requestFullscreen();
+                setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+                toastr.success('Map in fullscreen mode. Press ESC to exit.');
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Toggle between Map and Table view
+        $('#toggleMapView').on('click', function() {
+            $('#mapContainer').show();
+            $('#tableContainer').hide();
+            $(this).addClass('active');
+            $('#toggleTableView').removeClass('active');
+            setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+        });
+        
+        $('#toggleTableView').on('click', function() {
+            $('#mapContainer').hide();
+            $('#tableContainer').show();
+            $(this).addClass('active');
+            $('#toggleMapView').removeClass('active');
+            
+            if (!dataTable) {
+                dataTable = $('#zonesTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    order: [[1, 'asc']],
+                    language: { emptyTable: "No zones available" }
+                });
+            }
+        });
+        
+        // Export functions
+        $('#exportExcelBtn').on('click', function(e) {
+            e.preventDefault();
+            if (dataTable) dataTable.button('.buttons-excel').trigger();
+        });
+        
+        $('#exportCSVBtn').on('click', function(e) {
+            e.preventDefault();
+            if (dataTable) dataTable.button('.buttons-csv').trigger();
+        });
+        
+        $('#printTableBtn').on('click', function(e) {
+            e.preventDefault();
+            if (dataTable) dataTable.button('.buttons-print').trigger();
+        });
+        
+        if (dataTable) {
+            new $.fn.dataTable.Buttons(dataTable, {
+                buttons: [
+                    { extend: 'excel', filename: 'zones_export' },
+                    { extend: 'csv', filename: 'zones_export' },
+                    { extend: 'print', title: 'Zones Report' }
+                ]
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            dataTable = $('#zonesTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[1, 'asc']],
+                language: { emptyTable: "No zones available" }
+            });
+            $('#tableContainer').hide();
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+    
+    <style>
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-size: 0.9rem;
+        }
+    </style>
+</body>
+</html>

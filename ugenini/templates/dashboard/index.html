@@ -1,0 +1,394 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Dashboard | VMS</title>
+    <meta name="description" content="Visitor Management System Dashboard" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .status-badge { padding: 0.35rem 0.65rem; font-size: 0.7rem; font-weight: 500; border-radius: 0.375rem; display: inline-block; }
+        .status-present { background-color: #e8f5e9; color: #2e7d32; }
+        .status-absent { background-color: #ffebee; color: #c62828; }
+        .status-late { background-color: #fff3e0; color: #e65100; }
+        .dataTables_wrapper .dataTables_filter input { margin-left: 0.5rem; }
+        .table-responsive { overflow-x: auto; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <!-- Top navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search..." id="globalSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item lh-1 me-3"><a class="github-button" href="https://github.com/C1-10-P/vms" data-icon="octicon-star" data-size="large" data-show-count="true">Star</a></li>
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="..." alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ user_role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <!-- Stats Cards Row -->
+                        <div class="row">
+                            <div class="col-lg-8 mb-4 order-0">
+                                <div class="card">
+                                    <div class="d-flex align-items-end row">
+                                        <div class="col-sm-7">
+                                            <div class="card-body">
+                                                <h5 class="card-title text-primary">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h5>
+                                                <p class="mb-2">Today is <strong>{{ now|date:"l, F j, Y" }}</strong><br><span id="currentTime" class="text-muted"></span></p>
+                                                <p class="mb-4">You have <span class="fw-bold">{{ online_tags|default:0 }}</span> online tags and <span class="fw-bold">{{ active_visitors|default:0 }}</span> active visitors</p>
+                                                <a href="{% url 'firmware:monitor' %}" class="btn btn-sm btn-outline-primary">View Devices</a>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-5 text-center text-sm-left">
+                                            <div class="card-body pb-0 px-0 px-md-4">
+                                                <img src="{% static 'assets/img/illustrations/man-with-laptop-light.png' %}" height="140" alt="Illustration" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 order-1">
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-12 col-6 mb-4">
+                                        <div class="card stat-card">
+                                            <div class="card-body">
+                                                <div class="card-title d-flex align-items-start justify-content-between">
+                                                    <div class="avatar flex-shrink-0"><img src="{% static 'assets/img/icons/unicons/chart-success.png' %}" alt="success" class="rounded" /></div>
+                                                </div>
+                                                <span class="fw-semibold d-block mb-1">Staff</span>
+                                                <h3 class="card-title mb-2">{{ total_staff|default:0 }}</h3>
+                                                <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> Active</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6 col-md-12 col-6 mb-4">
+                                        <div class="card stat-card">
+                                            <div class="card-body">
+                                                <div class="card-title d-flex align-items-start justify-content-between">
+                                                    <div class="avatar flex-shrink-0"><img src="{% static 'assets/img/icons/unicons/wallet-info.png' %}" alt="wallet" class="rounded" /></div>
+                                                </div>
+                                                <span>Schools</span>
+                                                <h3 class="card-title text-nowrap mb-1">{{ total_schools|default:0 }}</h3>
+                                                <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> Active</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance Chart and side stats -->
+                        <div class="row">
+                            <div class="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
+                                <div class="card">
+                                    <div class="row row-bordered g-0">
+                                        <div class="col-md-8">
+                                            <h5 class="card-header m-0 me-2 pb-3">Attendance Overview</h5>
+                                            <div id="attendanceChart" class="px-2"></div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card-body">
+                                                <div class="text-center">
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="periodDropdown" data-bs-toggle="dropdown">This Week</button>
+                                                        <div class="dropdown-menu dropdown-menu-end">
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="updateChart('week')">This Week</a>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="updateChart('month')">This Month</a>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="updateChart('year')">This Year</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="growthChart"></div>
+                                            <div class="d-flex px-xxl-4 px-lg-2 p-4 gap-xxl-3 gap-lg-1 gap-3 justify-content-between">
+                                                <div class="d-flex"><div class="me-2"><span class="badge bg-label-primary p-2"><i class="bx bx-user text-primary"></i></span></div><div class="d-flex flex-column"><small>Today</small><h6 class="mb-0">{{ attendance_today|default:0 }}</h6></div></div>
+                                                <div class="d-flex"><div class="me-2"><span class="badge bg-label-info p-2"><i class="bx bx-calendar-week text-info"></i></span></div><div class="d-flex flex-column"><small>This Week</small><h6 class="mb-0">{{ attendance_week|default:0 }}</h6></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-8 col-lg-4 order-3 order-md-2">
+                                <div class="row">
+                                    <div class="col-6 mb-4"><div class="card stat-card"><div class="card-body"><div class="card-title d-flex align-items-start justify-content-between"><div class="avatar flex-shrink-0"><img src="{% static 'assets/img/icons/unicons/paypal.png' %}" alt="dept" class="rounded" /></div></div><span class="d-block mb-1">Departments</span><h3 class="card-title text-nowrap mb-2">{{ total_departments|default:0 }}</h3><small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> Active</small></div></div></div>
+                                    <div class="col-6 mb-4"><div class="card stat-card"><div class="card-body"><div class="card-title d-flex align-items-start justify-content-between"><div class="avatar flex-shrink-0"><img src="{% static 'assets/img/icons/unicons/cc-primary.png' %}" alt="program" class="rounded" /></div></div><span class="fw-semibold d-block mb-1">Programs</span><h3 class="card-title mb-2">{{ total_programs|default:0 }}</h3><small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i> Active</small></div></div></div>
+                                    <div class="col-12 mb-4"><div class="card stat-card"><div class="card-body"><div class="d-flex justify-content-between flex-sm-row flex-column gap-3"><div class="d-flex flex-sm-column flex-row align-items-start justify-content-between"><div class="card-title"><h5 class="text-nowrap mb-2">Students</h5><span class="badge bg-label-warning rounded-pill">{{ now|date:"F Y" }}</span></div><div class="mt-sm-auto"><h3 class="mb-0">{{ total_students|default:0 }}</h3><small class="text-success">Total Enrolled</small></div></div><div id="studentChart"></div></div></div></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tag, Visitor Charts + Tables Row -->
+                        <div class="row">
+                            <!-- Tag Statistics -->
+                            <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header"><h5 class="card-title mb-0">Tag Status</h5></div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="d-flex flex-column align-items-center gap-1"><h2 class="mb-2"></h2><span></span></div>
+                                            <div id="tagChart"></div>
+                                        </div>
+                                        <ul class="p-0 m-0">
+                                            <li class="d-flex mb-3"><div class="avatar flex-shrink-0 me-3"><span class="avatar-initial rounded bg-label-primary"><i class="bx bx-mobile-alt"></i></span></div><div class="d-flex w-100 justify-content-between"><span>Online Tags</span><strong>{{ online_tags|default:0 }}</strong></div></li>
+                                            <li class="d-flex mb-3"><div class="avatar flex-shrink-0 me-3"><span class="avatar-initial rounded bg-label-success"><i class="bx bx-closet"></i></span></div><div class="d-flex w-100 justify-content-between"><span>Offline Tags</span><strong>{{ offline_tags|default:0 }}</strong></div></li>
+                                            <li class="d-flex mb-3"><div class="avatar flex-shrink-0 me-3"><span class="avatar-initial rounded bg-label-info"><i class="bx bx-home-alt"></i></span></div><div class="d-flex w-100 justify-content-between"><span>Maintenance</span><strong>{{ maintenance_tags|default:0 }}</strong></div></li>
+                                            <li class="d-flex"><div class="avatar flex-shrink-0 me-3"><span class="avatar-initial rounded bg-label-secondary"><i class="bx bx-football"></i></span></div><div class="d-flex w-100 justify-content-between"><span>Defective</span><strong>0</strong></div></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Visitor Statistics + Table -->
+                            <div class="col-md-6 col-lg-4 order-1 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header"><ul class="nav nav-pills" role="tablist"><li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#visitors-tab">Visitors</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#locations-tab">Locations</button></li></ul></div>
+                                    <div class="card-body px-0">
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade show active" id="visitors-tab">
+                                                <div class="d-flex p-4 pt-3"><div class="avatar flex-shrink-0 me-3"><img src="{% static 'assets/img/icons/unicons/wallet.png' %}" alt="User" /></div><div><small class="text-muted d-block">Total Visitors Today</small><div class="d-flex align-items-center"><h6 class="mb-0 me-1">{{ visitor_today|default:0 }}</h6><small class="text-success fw-semibold"><i class="bx bx-chevron-up"></i> from yesterday</small></div></div></div>
+                                                <div id="visitorChart"></div>
+                                                <div class="d-flex justify-content-center pt-4 gap-2"><div id="visitorTrend"></div><div><p class="mb-n1 mt-1">Peak Hour: {{ visitor_peak_hour|default:"N/A" }}:00</p><small class="text-muted">Active: {{ active_visitors|default:0 }} visitors</small></div></div>
+                                            </div>
+                                            <div class="tab-pane fade" id="locations-tab">
+                                                <div class="p-4"><h6>Current Visitor Locations</h6>{% if current_locations %}{% for loc, count in current_locations.items %}<div class="d-flex justify-content-between mb-2"><span>{{ loc }}</span><span class="badge bg-primary">{{ count }}</span></div>{% endfor %}{% else %}<p class="text-muted">No active visitors</p>{% endif %}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Activity Table (instead of plain list) -->
+                            <div class="col-md-12 col-lg-4 order-2 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">Recent Activity</h5>
+                                        <div class="dropdown"><button class="btn p-0" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded"></i></button><div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#" onclick="refreshActivity()">Refresh</a><a class="dropdown-item" href="{% url 'access:log_list' %}">View All</a></div></div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0" id="activityTable">
+                                                <thead><tr><th>Time</th><th>Event</th><th>Type</th></tr></thead>
+                                                <tbody>
+                                                    {% for act in recent_activity|slice:":15" %}
+                                                    <tr>
+                                                        <td class="text-nowrap">{{ act.timestamp|date:"H:i:s" }}</td>
+                                                        <td>{{ act.message }}</td>
+                                                        <td><span class="badge bg-label-{{ act.color }}">{{ act.type|title }}</span></td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr><td colspan="3" class="text-center">No recent activity</td></tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance Records Table (optional, adds more data) -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header"><h5 class="card-title mb-0">Recent Attendance Records</h5></div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover" id="attendanceTable">
+                                                <thead><tr><th>Student</th><th>Class</th><th>Time</th><th>Status</th></tr></thead>
+                                                <tbody>
+                                                    {% for att in recent_attendance %}
+                                                    <tr>
+                                                        <td>{{ att.student.person.full_name }}</td>
+                                                        <td>{{ att.class_obj.class_code }}</td>
+                                                        <td>{{ att.scan_time|date:"Y-m-d H:i" }}</td>
+                                                        <td><span class="status-badge status-{{ att.verification_status }}">{{ att.get_verification_status_display }}</span></td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr><td colspan="4" class="text-center">No recent attendance</td></tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+        <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/apex-charts/apexcharts.js' %}"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+    <script>
+        // Current time
+        function updateTime() { document.getElementById('currentTime').textContent = new Date().toLocaleTimeString(); }
+        setInterval(updateTime, 1000); updateTime();
+
+        toastr.options = { closeButton: true, progressBar: true, positionClass: "toast-top-right", timeOut: 3000 };
+
+        // Attendance Chart
+        const attendanceChart = new ApexCharts(document.querySelector("#attendanceChart"), {
+            series: [{ name: 'Attendance', data: {{ attendance_data|default:'[]' }} }],
+            chart: { type: 'line', height: 350, toolbar: { show: false } },
+            xaxis: { categories: {{ attendance_labels|default:'[]' }} },
+            stroke: { curve: 'smooth', width: 3 },
+            colors: ['#696cff'],
+            markers: { size: 5 },
+            tooltip: { theme: 'dark' }
+        });
+        attendanceChart.render();
+
+        // Tag Donut
+        new ApexCharts(document.querySelector("#tagChart"), {
+            series: [{{ online_tags|default:0 }}, {{ offline_tags|default:0 }}, {{ maintenance_tags|default:0 }}],
+            labels: ['Online', 'Offline', 'Maintenance'],
+            chart: { type: 'donut', height: 200 },
+            colors: ['#28C76F', '#EA5455', '#FF9F43'],
+            legend: { show: false }
+        }).render();
+
+        // Visitor Radial
+        new ApexCharts(document.querySelector("#visitorChart"), {
+            series: [{{ visitor_today|default:0 }}, {{ visitor_week|default:0 }}],
+            labels: ['Today', 'This Week'],
+            chart: { type: 'radialBar', height: 200 },
+            colors: ['#696cff', '#28C76F'],
+            plotOptions: { radialBar: { dataLabels: { name: { fontSize: '22px' }, value: { fontSize: '16px' } } } }
+        }).render();
+
+        // Student mini bar
+        new ApexCharts(document.querySelector("#studentChart"), {
+            series: [{ name: 'Students', data: [{{ total_students|default:0 }}] }],
+            chart: { type: 'bar', height: 100, toolbar: { show: false } },
+            plotOptions: { bar: { borderRadius: 4, horizontal: true } },
+            dataLabels: { enabled: false },
+            xaxis: { categories: ['Total'] },
+            colors: ['#696cff']
+        }).render();
+
+        // DataTables for recent activity and attendance tables
+        $(document).ready(function() {
+            $('#activityTable').DataTable({
+                paging: true,
+                searching: false,
+                ordering: true,
+                order: [[0, 'desc']],
+                pageLength: 10,
+                lengthMenu: [[5,10,25], [5,10,25]],
+                responsive: true
+            });
+            $('#attendanceTable').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                order: [[2, 'desc']],
+                pageLength: 10,
+                responsive: true
+            });
+        });
+
+        function updateChart(period) {
+            fetch(`?period=${period}`)
+                .then(res => res.json())
+                .then(data => {
+                    attendanceChart.updateSeries([{ data: data.values }]);
+                    attendanceChart.updateOptions({ xaxis: { categories: data.labels } });
+                    toastr.info(`Chart updated for ${period}`);
+                })
+                .catch(() => toastr.error('Failed to update chart'));
+        }
+
+        function refreshActivity() { location.reload(); }  // simple reload for demo
+
+        // Global search (simple)
+        document.getElementById('globalSearch').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') window.location.href = `?q=${encodeURIComponent(this.value)}`;
+        });
+    </script>
+</body>
+</html>

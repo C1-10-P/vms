@@ -1,0 +1,691 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Visitor Tracking Map - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heatmap.css" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        #map {
+            height: 550px;
+            width: 100%;
+            border-radius: 0.5rem;
+            z-index: 1;
+        }
+        .map-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1050;
+            border-radius: 0;
+        }
+        .map-fullscreen #map {
+            height: 100vh;
+            border-radius: 0;
+        }
+        .info-panel {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .visitor-marker {
+            background-color: #696cff;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            box-shadow: 0 0 4px rgba(0,0,0,0.3);
+        }
+        .zone-polygon {
+            fill-opacity: 0.2;
+            stroke-width: 2;
+        }
+        .legend {
+            background: white;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-right: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .table-actions {
+            white-space: nowrap;
+        }
+        .visitor-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .visitor-row:hover {
+            background-color: #f8f9fa;
+        }
+        .visitor-row.active-row {
+            background-color: #e8f5e9;
+        }
+        .zoom-to-btn {
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        .toggle-view-btn {
+            transition: all 0.2s;
+        }
+        .toggle-view-btn.active {
+            background-color: #696cff;
+            color: white;
+            border-color: #696cff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-map fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Visitor Tracking Map</span>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Visitors</span><h3 class="mb-0" id="activeVisitorsCount">{{ active_visitors|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-user bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Zones</span><h3 class="mb-0">{{ total_zones|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Occupancy Rate</span><h3 class="mb-0" id="occupancyRate">0%</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-chart bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Alerts</span><h3 class="mb-0" id="alertsCount">0</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-danger rounded p-3"><i class="bx bx-bell bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View Toggle Buttons -->
+                        <div class="d-flex justify-content-end mb-3">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-secondary toggle-view-btn active" id="toggleMapView">
+                                    <i class="bx bx-map me-1"></i> Map View
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary toggle-view-btn" id="toggleTableView">
+                                    <i class="bx bx-table me-1"></i> Table View
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary ms-2" onclick="toggleFullscreen()">
+                                <i class="bx bx-fullscreen"></i>
+                            </button>
+                        </div>
+
+                        <!-- Map Container - Expanded -->
+                        <div id="mapContainer" class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div><h5 class="card-title mb-0">Visitor Tracking Map</h5><small class="text-muted">Real-time visitor locations and zone boundaries</small></div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshMap()"><i class="bx bx-refresh"></i> Refresh</button>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="toggleHeatmap()"><i class="bx bx-heat"></i> Heatmap</button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="centerMap()"><i class="bx bx-crosshair"></i> Center</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="map"></div>
+                                <div class="legend mt-3">
+                                    <strong>Legend:</strong><br>
+                                    <span class="legend-color" style="background: #28a745;"></span> Normal Zone &nbsp;
+                                    <span class="legend-color" style="background: #fd7e14;"></span> Restricted Zone &nbsp;
+                                    <span class="legend-color" style="background: #6f42c1;"></span> High Security &nbsp;
+                                    <span class="legend-color" style="background: #ffc107;"></span> Near Capacity &nbsp;
+                                    <span class="legend-color" style="background: #dc3545;"></span> Full &nbsp;
+                                    <span class="legend-color" style="background: #696cff; border-radius: 50%; width: 12px; height: 12px;"></span> Visitor Location
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Container -->
+                        <div id="tableContainer" style="display: none;">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><i class="bx bx-table me-1"></i> Active Visitors</h5>
+                                    <small class="text-muted">Click on any row to zoom to visitor location on map</small>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="visitorsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Visitor Name</th>
+                                                <th>ID Number</th>
+                                                <th>Organization</th>
+                                                <th>Zone</th>
+                                                <th>Check-in Time</th>
+                                                <th>Tag ID</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="visitorsTableBody">
+                                            <tr><td colspan="7" class="text-center">Loading visitors...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visitor Detail Modal -->
+    <div class="modal fade" id="visitorDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-user-circle me-2"></i>Visitor Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="visitorDetailContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="viewPathBtn">View Movement Path</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        // Map variables
+        let map, drawnItems, heatLayer, currentVisitorId = null;
+        let mapConfig = {{ map_config|safe }};
+        let heatmapEnabled = false;
+        let visitorsData = [];
+        let visitorsTable;
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView(mapConfig.center, mapConfig.zoom || 15);
+            
+            // Add tile layer
+            L.tileLayer(mapConfig.tile_url, {
+                attribution: mapConfig.attribution,
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Add zones
+            mapConfig.zones.forEach(function(zone) {
+                let layer;
+                if (zone.geometry.type === 'Polygon') {
+                    layer = L.polygon(zone.geometry.coordinates, {
+                        color: zone.properties.color,
+                        weight: 2,
+                        fillColor: zone.properties.color,
+                        fillOpacity: 0.2
+                    }).addTo(map);
+                } else if (zone.geometry.type === 'Point') {
+                    layer = L.circleMarker([zone.geometry.coordinates[1], zone.geometry.coordinates[0]], {
+                        radius: 10,
+                        color: zone.properties.color,
+                        weight: 2,
+                        fillColor: zone.properties.color,
+                        fillOpacity: 0.5
+                    }).addTo(map);
+                }
+                
+                if (layer) {
+                    layer.bindTooltip(`
+                        <strong>${zone.properties.name}</strong><br>
+                        Type: ${zone.properties.zone_type}<br>
+                        Occupancy: ${zone.properties.current_occupancy || 0}/${zone.properties.capacity || '∞'}<br>
+                        Access Level: ${zone.properties.access_level}
+                    `, { sticky: true });
+                    
+                    layer.on('click', function() {
+                        toastr.info(`Zone: ${zone.properties.name} - Occupancy: ${zone.properties.current_occupancy || 0}/${zone.properties.capacity || '∞'}`);
+                    });
+                }
+            });
+            
+            // Add visitors
+            updateVisitorMarkers();
+            
+            // Add drawing controls
+            drawnItems = L.featureGroup().addTo(map);
+            let drawControl = new L.Control.Draw({
+                edit: { featureGroup: drawnItems },
+                draw: {
+                    polygon: true,
+                    polyline: true,
+                    rectangle: true,
+                    circle: true,
+                    marker: true
+                }
+            });
+            map.addControl(drawControl);
+            
+            map.on(L.Draw.Event.CREATED, function(e) {
+                let layer = e.layer;
+                drawnItems.addLayer(layer);
+                const bounds = layer.getBounds();
+                map.fitBounds(bounds);
+            });
+        }
+        
+        function updateVisitorMarkers() {
+            mapConfig.visitors.forEach(function(visitor) {
+                if (visitor.geometry && visitor.geometry.coordinates) {
+                    let marker = L.marker([visitor.geometry.coordinates[1], visitor.geometry.coordinates[0]], {
+                        icon: L.divIcon({
+                            className: 'visitor-marker',
+                            iconSize: [12, 12]
+                        })
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`
+                        <div style="min-width: 200px;">
+                            <strong>${visitor.properties.name}</strong><br>
+                            Tag: ${visitor.properties.tag_uuid || 'N/A'}<br>
+                            Last seen: ${visitor.properties.last_seen ? new Date(visitor.properties.last_seen).toLocaleTimeString() : 'Unknown'}<br>
+                            Status: ${visitor.properties.status}<br>
+                            <button class="btn btn-sm btn-primary mt-2" onclick="showVisitorDetail('${visitor.properties.visitor_id}')">View Details</button>
+                        </div>
+                    `);
+                }
+            });
+        }
+        
+        function toggleHeatmap() {
+            heatmapEnabled = !heatmapEnabled;
+            if (heatmapEnabled) {
+                fetch('/vms/api/movement/?action=heatmap&hours=24')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data) {
+                            let heatData = data.data.map(point => [point.lat, point.lng, point.intensity]);
+                            heatLayer = L.heatLayer(heatData, {
+                                radius: 25,
+                                blur: 15,
+                                maxZoom: 17,
+                                minOpacity: 0.5
+                            }).addTo(map);
+                            toastr.info('Heatmap enabled');
+                        } else {
+                            toastr.warning('No heatmap data available');
+                        }
+                    }).catch(() => toastr.error('Failed to load heatmap data'));
+            } else {
+                if (heatLayer) map.removeLayer(heatLayer);
+                toastr.info('Heatmap disabled');
+            }
+        }
+        
+        function refreshMap() {
+            location.reload();
+        }
+        
+        function centerMap() {
+            map.setView(mapConfig.center, 15);
+        }
+        
+        function toggleFullscreen() {
+            const mapContainer = document.getElementById('mapContainer');
+            if (!document.fullscreenElement) {
+                mapContainer.requestFullscreen();
+                toastr.success('Map in fullscreen mode. Press ESC to exit.');
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Load active visitors for table
+        function loadActiveVisitors() {
+            fetch('/vms/api/movement/?action=active')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        visitorsData = data.data;
+                        const tbody = $('#visitorsTableBody');
+                        tbody.empty();
+                        
+                        if (visitorsData.length === 0) {
+                            tbody.html('<tr><td colspan="7" class="text-center">No active visitors</td></tr>');
+                        } else {
+                            visitorsData.forEach(visitor => {
+                                const row = `
+                                    <tr class="visitor-row" data-visitor-id="${visitor.visitor_id}" data-lat="${visitor.latitude || ''}" data-lng="${visitor.longitude || ''}">
+                                        <td><strong>${escapeHtml(visitor.visitor_name)}</strong></td>
+                                        <td>${escapeHtml(visitor.id_number || '—')}</td>
+                                        <td>${escapeHtml(visitor.organization || '—')}</td>
+                                        <td><span class="badge bg-label-info">${escapeHtml(visitor.zone || 'Unknown')}</span></td>
+                                        <td>${visitor.last_seen ? new Date(visitor.last_seen).toLocaleString() : '—'}</td>
+                                        <td><code class="small">${escapeHtml(visitor.tag_uuid ? visitor.tag_uuid.substring(0, 13) : 'Not assigned')}</code></td>
+                                        <td class="table-actions">
+                                            <button class="btn btn-sm btn-outline-primary zoom-to-btn" onclick="zoomToVisitor('${visitor.visitor_id}', ${visitor.latitude || 0}, ${visitor.longitude || 0})">
+                                                <i class="bx bx-crosshair"></i> Zoom
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" onclick="showVisitorDetail('${visitor.visitor_id}')">
+                                                <i class="bx bx-show"></i> Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                                tbody.append(row);
+                            });
+                        }
+                        
+                        // Initialize DataTable
+                        if (visitorsTable) {
+                            visitorsTable.destroy();
+                        }
+                        visitorsTable = $('#visitorsTable').DataTable({
+                            responsive: true,
+                            pageLength: 10,
+                            order: [[0, 'asc']],
+                            language: { emptyTable: "No active visitors" }
+                        });
+                        
+                        document.getElementById('activeVisitorsCount').innerText = visitorsData.length;
+                    } else {
+                        $('#visitorsTableBody').html('<tr><td colspan="7" class="text-center">No active visitors</td></tr>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading visitors:', error);
+                    $('#visitorsTableBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading visitors</td></tr>');
+                });
+        }
+        
+        function zoomToVisitor(visitorId, lat, lng) {
+            if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                map.setView([lat, lng], 18);
+                toastr.success(`Zooming to visitor location`);
+            } else {
+                // Try to get location from visitor data
+                const visitor = visitorsData.find(v => v.visitor_id == visitorId);
+                if (visitor && visitor.latitude && visitor.longitude) {
+                    map.setView([visitor.latitude, visitor.longitude], 18);
+                } else {
+                    toastr.warning('Visitor location not available');
+                }
+            }
+        }
+        
+        function showVisitorDetail(visitorId) {
+            currentVisitorId = visitorId;
+            $('#visitorDetailModal').modal('show');
+            $('#visitorDetailContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            fetch(`/vms/api/movement/?action=path&visitor_id=${visitorId}&hours=24`)
+                .then(response => response.json())
+                .then(data => {
+                    const pathPoints = data.path?.coordinates || [];
+                    const features = data.features || [];
+                    const zonesVisited = [...new Set(features.map(f => f.properties.zone).filter(z => z))];
+                    
+                    const visitor = visitorsData.find(v => v.visitor_id == visitorId) || {};
+                    
+                    $('#visitorDetailContent').html(`
+                        <div class="mb-3">
+                            <h6><i class="bx bx-user-circle me-1"></i> Visitor Information</h6>
+                            <table class="table table-sm">
+                                <tr><td width="40%">Name:</td><td><strong>${escapeHtml(data.visitor_name) || escapeHtml(visitor.visitor_name) || 'N/A'}</strong></td></tr>
+                                <tr><td>ID Number:</td><td>${escapeHtml(visitor.id_number || '—')}</td></tr>
+                                <tr><td>Organization:</td><td>${escapeHtml(visitor.organization || '—')}</td></tr>
+                                <tr><td>Current Zone:</td><td>${escapeHtml(visitor.zone || 'Unknown')}</td></tr>
+                                <tr><td>Tag UUID:</td><td><code>${escapeHtml(data.tag_uuid) || escapeHtml(visitor.tag_uuid) || 'Not assigned'}</code></td></tr>
+                                <tr><td>Movement Points:</td><td>${pathPoints.length}</td></tr>
+                                <tr><td>Zones Visited:</td><td>${zonesVisited.length}</td></tr>
+                            </table>
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="bx bx-map me-1"></i> Recent Activity</h6>
+                            <div class="list-group" style="max-height: 250px; overflow-y: auto;">
+                                ${features.slice(0, 10).map(f => `
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">${new Date(f.properties.timestamp).toLocaleString()}</small>
+                                            <span class="badge ${f.properties.event_type === 'enter' ? 'bg-success' : 'bg-warning'}">${f.properties.event_type || 'movement'}</span>
+                                        </div>
+                                        <div><strong>${escapeHtml(f.properties.zone) || 'Unknown location'}</strong></div>
+                                        ${f.properties.rssi ? `<small class="text-muted">Signal: ${f.properties.rssi} dBm</small>` : ''}
+                                    </div>
+                                `).join('') || '<div class="text-muted text-center">No movement data available</div>'}
+                            </div>
+                        </div>
+                    `);
+                    
+                    document.getElementById('viewPathBtn').onclick = function() {
+                        const coordinates = data.path?.coordinates || [];
+                        if (coordinates.length > 0) {
+                            const latlngs = coordinates.map(coord => [coord[1], coord[0]]);
+                            const pathLine = L.polyline(latlngs, { color: '#696cff', weight: 3 }).addTo(map);
+                            map.fitBounds(pathLine.getBounds());
+                            $('#visitorDetailModal').modal('hide');
+                            toastr.success('Showing movement path on map');
+                            // Switch to map view
+                            $('#toggleMapView').click();
+                        } else {
+                            toastr.warning('No movement path available for this visitor');
+                        }
+                    };
+                })
+                .catch(error => {
+                    console.error('Error fetching visitor details:', error);
+                    $('#visitorDetailContent').html('<div class="alert alert-danger m-3">Failed to load visitor details</div>');
+                });
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Toggle between Map and Table view
+        $('#toggleMapView').on('click', function() {
+            $('#mapContainer').show();
+            $('#tableContainer').hide();
+            $(this).addClass('active');
+            $('#toggleTableView').removeClass('active');
+            setTimeout(() => map.invalidateSize(), 100);
+        });
+        
+        $('#toggleTableView').on('click', function() {
+            $('#mapContainer').hide();
+            $('#tableContainer').show();
+            $(this).addClass('active');
+            $('#toggleMapView').removeClass('active');
+            loadActiveVisitors();
+        });
+        
+        // Click on table row to zoom
+        $(document).on('click', '.visitor-row', function() {
+            const lat = $(this).data('lat');
+            const lng = $(this).data('lng');
+            if (lat && lng) {
+                $('#toggleMapView').click();
+                setTimeout(() => {
+                    map.setView([lat, lng], 18);
+                    toastr.success('Zoomed to visitor location');
+                }, 300);
+            }
+        });
+        
+        // Auto-refresh every 30 seconds
+        let refreshInterval;
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                if ($('#tableContainer').is(':visible')) {
+                    loadActiveVisitors();
+                }
+            }, 30000);
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+        }
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) stopAutoRefresh();
+            else startAutoRefresh();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            startAutoRefresh();
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

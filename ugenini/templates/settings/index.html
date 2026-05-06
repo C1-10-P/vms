@@ -1,0 +1,299 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Settings Dashboard - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .settings-card {
+            transition: all 0.2s;
+        }
+        .settings-card:hover {
+            border-color: #696cff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <!-- Layout page -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-cog fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Settings Dashboard</span>
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <!-- User Dropdown -->
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Page Header -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title mb-1">Settings Dashboard</h4>
+                                        <p class="card-text text-muted">Manage system configuration and preferences</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Cards Grid -->
+                        <div class="row g-4">
+                            <!-- General Settings -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-primary rounded p-2">
+                                                    <i class="bx bx-cog bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">General Settings</h5>
+                                        </div>
+                                        <p class="card-text">Configure site name, description, timezone, date formats, and pagination settings.</p>
+                                        <a href="{% url 'settings:general' %}" class="btn btn-outline-primary">Configure <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Security Settings -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-danger rounded p-2">
+                                                    <i class="bx bx-shield bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">Security Settings</h5>
+                                        </div>
+                                        <p class="card-text">Manage session timeout, login attempts, password policies, and 2FA settings.</p>
+                                        <a href="{% url 'settings:security' %}" class="btn btn-outline-danger">Configure <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notification Settings -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-success rounded p-2">
+                                                    <i class="bx bx-bell bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">Notification Settings</h5>
+                                        </div>
+                                        <p class="card-text">Configure email/SMS notifications, alerts for attendance, visitors, and security.</p>
+                                        <a href="{% url 'settings:notification' %}" class="btn btn-outline-success">Configure <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-primary rounded p-2">
+                                                    <i class="bx bx-user bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">User Management</h5>
+                                        </div>
+                                        <p class="card-text">Manage system users: create, edit, deactivate, assign roles, and view user activity logs.</p>
+                                        <a href="{% url 'users:list' %}" class="btn btn-outline-primary">Manage Users <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-primary rounded p-2">
+                                                    <i class="bx bx-lock-alt bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">Role Management</h5>
+                                        </div>
+                                        <p class="card-text">Define roles and permissions, control access levels, and assign permission sets to user groups.</p>
+                                        <a href="{% url 'users:role_list' %}" class="btn btn-outline-primary">Manage Roles <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                           
+
+                            <!-- Integration Settings -->
+                            
+
+                            <!-- Audit Logs -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card settings-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="badge bg-label-secondary rounded p-2">
+                                                    <i class="bx bx-history bx-sm"></i>
+                                                </span>
+                                            </div>
+                                            <h5 class="card-title mb-0">Audit Logs</h5>
+                                        </div>
+                                        <p class="card-text">View system audit logs, user activities, and security events.</p>
+                                        <a href="{% url 'settings:audit_logs' %}" class="btn btn-outline-secondary">View <i class="bx bx-chevron-right ms-1"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

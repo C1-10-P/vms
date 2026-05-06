@@ -1,0 +1,765 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>BLE Tags - Ugenini VMS</title>
+    <meta name="description" content="Manage BLE Tags" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .status-available { background-color: #e8f5e9; color: #2e7d32; }
+        .status-assigned { background-color: #e3f2fd; color: #1565c0; }
+        .status-maintenance { background-color: #fff3e0; color: #e65100; }
+        .status-deprecated { background-color: #eceff1; color: #455a64; }
+        .type-badge {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            border-radius: 0.25rem;
+        }
+        .type-ble { background-color: #e3f2fd; color: #1565c0; }
+        .type-rfid { background-color: #e8f5e9; color: #2e7d32; }
+        .type-nfc { background-color: #f3e5f5; color: #6a1b9a; }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+        .battery-level {
+            width: 60px;
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .battery-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .battery-high { background-color: #28c76f; }
+        .battery-medium { background-color: #ff9f43; }
+        .battery-low { background-color: #ea5455; }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search tags..." id="tableSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Tags</span><h3 class="mb-0">{{ total_tags|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-tag bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Available</span><h3 class="mb-0 text-success">{{ available_tags|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Assigned</span><h3 class="mb-0 text-info">{{ assigned_tags|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-user bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                            <div class="d-flex gap-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bx bx-download me-1"></i> Export
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                        <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTagModal">
+                                <i class="bx bx-plus me-1"></i> Add Tag
+                            </button>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Status</label>
+                                        <select class="form-select" id="filterStatus">
+                                            <option value="">All</option>
+                                            <option value="available">Available</option>
+                                            <option value="assigned">Assigned</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="deprecated">Deprecated</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-secondary w-100" id="clearFiltersBtn">
+                                            <i class="bx bx-reset"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags Table -->
+                            <div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover" id="tagsTable">
+            <thead>
+                <tr>
+                    <th>Tag UUID</th>
+                    <th>Hardware ID</th>
+                    <th>Type</th>
+                    <th>Manufacturer</th>
+                    <th>Battery</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for tag in tags %}
+                <tr>
+
+                    <!-- UUID -->
+                    <td>
+                        <code>{{ tag.tag_uuid|truncatechars:16 }}</code>
+                    </td>
+
+                    <!-- Hardware ID -->
+                    <td>
+                        {{ tag.hardware_id|default:"—" }}
+                    </td>
+
+                    <!-- Type -->
+                    <td>
+                        <span class="type-badge type-{{ tag.tag_type|slugify }}">
+                            {{ tag.get_tag_type_display }}
+                        </span>
+                    </td>
+
+                    <!-- Manufacturer -->
+                    <td>
+                        {{ tag.manufacturer|default:"—" }}
+                    </td>
+
+                    <!-- Battery -->
+                    <td>
+                        <div>
+                            <div class="battery-level">
+                                <div class="battery-fill 
+                                    {% if tag.battery_level|default:0 > 50 %}
+                                        battery-high
+                                    {% elif tag.battery_level|default:0 > 20 %}
+                                        battery-medium
+                                    {% else %}
+                                        battery-low
+                                    {% endif %}"
+                                    style="width: {{ tag.battery_level|default:0 }}%">
+                                </div>
+                            </div>
+
+                            <small class="text-muted">
+                                {{ tag.battery_level|default:"—" }}%
+                            </small>
+                        </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if tag.status == 'available' %}
+                            <span class="status-badge status-available">Available</span>
+                        {% elif tag.status == 'assigned' %}
+                            <span class="status-badge status-assigned">Assigned</span>
+                        {% elif tag.status == 'maintenance' %}
+                            <span class="status-badge status-maintenance">Maintenance</span>
+                        {% else %}
+                            <span class="status-badge status-deprecated">Deprecated</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Assigned -->
+                    <td>
+                        {% if tag.current_assignment %}
+                            <div class="d-flex align-items-center">
+                                <i class="bx bx-user me-1"></i>
+                                {{ tag.current_assignment.visitor.person.get_full_name|truncatechars:20 }}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button type="button"
+                                    class="btn p-0 dropdown-toggle hide-arrow"
+                                    data-bs-toggle="dropdown">
+                                <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+
+                            <div class="dropdown-menu dropdown-menu-end">
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="viewTag({{ tag.id }})">
+                                    <i class="bx bx-show-alt me-1"></i>
+                                    View
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="editTag({{ tag.id }})">
+                                    <i class="bx bx-edit-alt me-1"></i>
+                                    Edit
+                                </a>
+
+                                {% if tag.status == 'available' %}
+                                    <a class="dropdown-item text-success"
+                                       href="javascript:void(0);"
+                                       onclick="assignTag({{ tag.id }})">
+                                        <i class="bx bx-user-plus me-1"></i>
+                                        Assign to Visitor
+                                    </a>
+                                {% elif tag.status == 'assigned' %}
+                                    <a class="dropdown-item text-warning"
+                                       href="javascript:void(0);"
+                                       onclick="releaseTag({{ tag.id }})">
+                                        <i class="bx bx-log-out me-1"></i>
+                                        Release
+                                    </a>
+                                {% endif %}
+
+                                {% if tag.status != 'maintenance' %}
+                                    <a class="dropdown-item text-info"
+                                       href="javascript:void(0);"
+                                       onclick="maintenanceTag({{ tag.id }})">
+                                        <i class="bx bx-wrench me-1"></i>
+                                        Mark Maintenance
+                                    </a>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="bx bx-tag bx-lg text-muted mb-3 d-block"></i>
+                        <h6 class="text-muted">No BLE tags found</h6>
+                        <p class="text-muted small">
+                            Click "Add Tag" to create your first BLE tag
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav>
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a></li>
+                                        {% endif %}
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Tag Modal -->
+    <div class="modal fade" id="addTagModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="addTagForm" method="POST" action="{% url 'vms:tag_create' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add BLE Tag</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label required">Tag UUID</label>
+                                <input type="text" name="tag_uuid" class="form-control" placeholder="Enter unique tag UUID" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Hardware ID</label>
+                                <input type="text" name="hardware_id" class="form-control" placeholder="e.g., BLE-001">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tag Type</label>
+                                <select name="tag_type" class="form-select">
+                                    <option value="ble">BLE</option>
+                                    <option value="rfid">RFID</option>
+                                    <option value="nfc">NFC</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Manufacturer</label>
+                                <input type="text" name="manufacturer" class="form-control" placeholder="e.g., Nordic">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Model</label>
+                                <input type="text" name="model" class="form-control" placeholder="e.g., nRF52840">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Firmware Version</label>
+                                <input type="text" name="firmware_version" class="form-control" placeholder="e.g., v1.0.0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Battery Level (%)</label>
+                                <input type="number" name="battery_level" class="form-control" min="0" max="100" value="100">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="is_active" class="form-check-input" checked>
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Proceed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Tag Modal -->
+    <div class="modal fade" id="viewTagModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Tag Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewTagContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn" style="display: none;">Edit Tag</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Tag Modal -->
+    <div class="modal fade" id="editTagModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Edit Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="editTagContent">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Tag Modal -->
+    <div class="modal fade" id="assignTagModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="assignTagForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-user-plus me-2"></i>Assign Tag to Visitor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label required">Select Visitor</label>
+                                <select name="visitor_id" class="form-select" required>
+                                    <option value="">Select Visitor</option>
+                                    {% for visitor in visitors %}
+                                    <option value="{{ visitor.id }}">{{ visitor.person.get_full_name }} ({{ visitor.id_number|default:"No ID" }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Assign Tag</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Release Tag Modal -->
+    <div class="modal fade" id="releaseTagModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="releaseTagForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-log-out me-2"></i>Release Tag</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="bx bx-info-circle me-1"></i>
+                            <small>Releasing this tag will remove it from the current visitor and make it available for reassignment.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Release Tag</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Tag Modal -->
+    <div class="modal fade" id="maintenanceTagModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="maintenanceTagForm" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bx bx-wrench me-2"></i>Mark for Maintenance</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Reason (Optional)</label>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Reason for maintenance..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-info">Mark Maintenance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let dataTable, currentTagId = null;
+        
+        $(document).ready(function() {
+            dataTable = $('#tagsTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[0, 'asc']],
+                language: { emptyTable: "No tags found" }
+            });
+            
+            $('.form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addTagModal')});
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        function applyFilters() {
+            let url = new URL(window.location.href);
+            if ($('#filterStatus').val()) url.searchParams.set('status', $('#filterStatus').val());
+            else url.searchParams.delete('status');
+            window.location.href = url.toString();
+        }
+        
+        $('#filterStatus').on('change', applyFilters);
+        $('#clearFiltersBtn').on('click', function() { window.location.href = window.location.pathname; });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {buttons: [{extend:'excel',filename:'tags_export'},{extend:'csv',filename:'tags_export'},{extend:'print',title:'BLE Tags Report'}]});
+        
+        function viewTag(tagId) {
+            currentTagId = tagId;
+            $('#viewTagModal').modal('show');
+            $('#viewTagContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            $('#editFromViewBtn').hide();
+            
+            $.get(`/vms/tags/${tagId}/detail/`, function(data) {
+                $('#viewTagContent').html(data);
+                $('#editFromViewBtn').show().attr('onclick', `editTag(${tagId})`);
+            }).fail(function() { $('#viewTagContent').html('<div class="alert alert-danger m-3">Failed to load tag details.</div>'); });
+        }
+        
+        function editTag(tagId) {
+            $('#viewTagModal').modal('hide');
+            $('#editTagModal').modal('show');
+            $('#editTagContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/vms/tags/${tagId}/edit/`, function(data) {
+                $('#editTagContent').html(data);
+                $('#editTagContent .form-select').select2({theme: 'bootstrap-5', width: '100%', dropdownParent: $('#editTagModal') });
+            }).fail(function() { $('#editTagContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>'); });
+        }
+        
+        function assignTag(tagId) {
+            currentTagId = tagId;
+            $('#assignTagForm').attr('action', `/vms/tags/${tagId}/assign/`);
+            $('#assignTagModal').modal('show');
+        }
+        
+        function releaseTag(tagId) {
+            currentTagId = tagId;
+            $('#releaseTagForm').attr('action', `/vms/tags/${tagId}/release/`);
+            $('#releaseTagModal').modal('show');
+        }
+        
+        function maintenanceTag(tagId) {
+            currentTagId = tagId;
+            $('#maintenanceTagForm').attr('action', `/vms/tags/${tagId}/maintenance/`);
+            $('#maintenanceTagModal').modal('show');
+        }
+        
+        $('#addTagForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this), btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Creating...');
+            $.ajax({
+                url: form.attr('action'), method: 'POST', data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addTagModal').modal('hide');
+                        toastr.success('BLE tag created successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else { toastr.error(response.error || 'Failed to create tag'); btn.prop('disabled', false).html('Create Tag'); }
+                }, error: function() { toastr.error('An error occurred'); btn.prop('disabled', false).html('Create Tag'); }
+            });
+        });
+        
+        $('#assignTagForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this), btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Assigning...');
+            $.ajax({
+                url: form.attr('action'), method: 'POST', data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#assignTagModal').modal('hide');
+                        toastr.success('Tag assigned successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else { toastr.error(response.error || 'Failed to assign tag'); btn.prop('disabled', false).html('Assign Tag'); }
+                }, error: function() { toastr.error('An error occurred'); btn.prop('disabled', false).html('Assign Tag'); }
+            });
+        });
+        
+        $('#releaseTagForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this), btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Releasing...');
+            $.ajax({
+                url: form.attr('action'), method: 'POST', data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#releaseTagModal').modal('hide');
+                        toastr.success('Tag released successfully!');
+                        setTimeout(() => location.reload(), 1500);
+                    } else { toastr.error(response.error || 'Failed to release tag'); btn.prop('disabled', false).html('Release Tag'); }
+                }, error: function() { toastr.error('An error occurred'); btn.prop('disabled', false).html('Release Tag'); }
+            });
+        });
+        
+        $('#maintenanceTagForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this), btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Updating...');
+            $.ajax({
+                url: form.attr('action'), method: 'POST', data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#maintenanceTagModal').modal('hide');
+                        toastr.success('Tag marked for maintenance');
+                        setTimeout(() => location.reload(), 1500);
+                    } else { toastr.error(response.error || 'Failed to update tag'); btn.prop('disabled', false).html('Mark Maintenance'); }
+                }, error: function() { toastr.error('An error occurred'); btn.prop('disabled', false).html('Mark Maintenance'); }
+            });
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

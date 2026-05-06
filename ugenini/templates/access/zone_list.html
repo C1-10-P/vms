@@ -1,0 +1,741 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Access Zones - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .zone-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+        }
+        .zone-badge.classroom { background-color: #e8f5e9; color: #2e7d32; }
+        .zone-badge.lab { background-color: #e3f2fd; color: #1565c0; }
+        .zone-badge.office { background-color: #fff3e0; color: #e65100; }
+        .zone-badge.hallway { background-color: #f3e5f5; color: #6a1b9a; }
+        .zone-badge.external { background-color: #ffebee; color: #c62828; }
+        .zone-badge.other { background-color: #eceff1; color: #455a64; }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search zones..." id="tableSearch" />
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Total Zones</span><h3 class="mb-0">{{ total_zones|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Classrooms</span><h3 class="mb-0">{{ classrooms|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Laboratories</span><h3 class="mb-0">{{ labs|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-flask bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Zones</span><h3 class="mb-0">{{ active_zones|default:0 }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-check-circle bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                         
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                            <div class="d-flex gap-2">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bx bx-download me-1"></i> Export
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" id="exportExcelBtn">Excel</a>
+                                        <a class="dropdown-item" href="#" id="exportCSVBtn">CSV</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#" id="printTableBtn">Print</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addZoneModal">
+                                <i class="bx bx-plus me-1"></i> Add Zone
+                            </button>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Zone Type</label>
+                                        <select class="form-select" id="filterZoneType">
+                                            <option value="">All Types</option>
+                                            {% for value, label in zone_types %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted small">Institution</label>
+                                        <select class="form-select" id="filterInstitution">
+                                            <option value="">All Institutions</option>
+                                            {% for inst in institutions %}
+                                            <option value="{{ inst.id }}" {% if request.GET.institution_id == inst.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ inst.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-secondary w-100" id="clearFiltersBtn">
+                                            <i class="bx bx-reset"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zones Table -->
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="zonesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Zone Name</th>
+                                            <th>Type</th>
+                                            <th>Institution</th>
+                                            <th>Location</th>
+                                            <th>Capacity</th>
+                                            <th>Access Level</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for zone in zones %}
+                                        <tr data-zone-id="{{ zone.id }}">
+                                            <td>{{ zone.code|default:"—" }}
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bx bx-building me-2 text-primary"></i>
+                                                    <strong>{{ zone.name }}</strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="zone-badge {{ zone.zone_type }}">
+                                                    {{ zone.get_zone_type_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ zone.institution.name|default:"—" }}
+                                            <td>
+                                                <small>
+                                                    {% if zone.building %}{{ zone.building }}{% endif %}
+                                                    {% if zone.room_number %} - Rm {{ zone.room_number }}{% endif %}
+                                                    {% if not zone.building and not zone.room_number %}—{% endif %}
+                                                </small>
+                                            </td>
+                                            <td>{{ zone.capacity|default:"—" }}
+                                            <td>
+                                                {% if zone.access_level == 'unrestricted' %}
+                                                <span class="badge bg-label-success">Unrestricted</span>
+                                                {% elif zone.access_level == 'restricted' %}
+                                                <span class="badge bg-label-warning">Restricted</span>
+                                                {% else %}
+                                                <span class="badge bg-label-danger">Authorized Only</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if zone.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                                    </button>
+                                                    <div class="dropdown-menu">
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="viewZone({{ zone.id }})">
+                                                            <i class="bx bx-show-alt me-1"></i> View
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="editZone({{ zone.id }})">
+                                                            <i class="bx bx-edit-alt me-1"></i> Edit
+                                                        </a>
+                                                        <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="toggleZoneStatus({{ zone.id }})">
+                                                            <i class="bx bx-power-off me-1"></i> 
+                                                            {% if zone.is_active %}Deactivate{% else %}Activate{% endif %}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="9" class="text-center py-5">
+                                                <i class="bx bx-building bx-lg text-muted mb-3 d-block"></i>
+                                                <h6 class="text-muted">No zones found</h6>
+                                                <p class="text-muted small">Click "Add Zone" to create your first access zone</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <div class="card-footer">
+                                <nav>
+                                    <ul class="pagination justify-content-center mb-0">
+                                        {% if page_obj.has_previous %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a></li>
+                                        {% endif %}
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADD ZONE MODAL (Backdrop static) -->
+    <!-- ============================================ -->
+     <div class="modal fade" id="addZoneModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form id="addZoneForm" method="POST" action="{% url 'access:zone_create' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-plus-circle me-2"></i>Add New Zone</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Zone Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g., Main Lecture Hall" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Zone Code</label>
+                            <input type="text" name="code" class="form-control" placeholder="e.g., ZN-001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">Zone Type</label>
+                            <select name="zone_type" class="form-select" required>
+                                <option value="">Select Type</option>
+                                {% for value, label in zone_types %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Parent Zone</label>
+                            <select name="parent_zone" class="form-select">
+                                <option value="">None</option>
+                                {% for zone in zones %}
+                                <option value="{{ zone.id }}">{{ zone.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">Institution</label>
+                            <select name="institution" id="institutionSelect" class="form-select" required>
+                                <option value="">Select Institution</option>
+                                {% for inst in institutions %}
+                                <option value="{{ inst.id }}">{{ inst.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">College</label>
+                            <select name="college" id="collegeSelect" class="form-select">
+                                <option value="">Select College</option>
+                                <!-- Options will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">School</label>
+                            <select name="school" id="schoolSelect" class="form-select">
+                                <option value="">Select School</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department</label>
+                            <select name="department" id="departmentSelect" class="form-select">
+                                <option value="">Select Department</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Building</label>
+                            <input type="text" name="building" class="form-control" placeholder="Building name">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Floor</label>
+                            <input type="text" name="floor" class="form-control" placeholder="e.g., 1st Floor">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Room Number</label>
+                            <input type="text" name="room_number" class="form-control" placeholder="Room #">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Capacity</label>
+                            <input type="number" name="capacity" class="form-control" placeholder="Max occupants">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Access Level</label>
+                            <select name="access_level" class="form-select">
+                                <option value="unrestricted">Unrestricted</option>
+                                <option value="restricted">Restricted</option>
+                                <option value="authorized_only">Authorized Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                <input type="checkbox" name="requires_2fa" class="form-check-input" id="requires2fa">
+                                <label class="form-check-label" for="requires2fa">Requires 2FA</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Zone description..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Proceed</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <!-- ============================================ -->
+    <!-- VIEW ZONE MODAL (Scrollable) -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="viewZoneModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-info-circle me-2"></i>Zone Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewZoneContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn" style="display: none;">Edit Zone</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EDIT ZONE MODAL (Scrollable) -->
+    <!-- ============================================ -->
+    <div class="modal fade" id="editZoneModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-edit-alt me-2"></i>Edit Zone</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editZoneContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+
+        let dataTable;
+        
+        $(document).ready(function() {
+            dataTable = $('#zonesTable').DataTable({
+                responsive: true,
+                paging: false,
+                searching: false,
+                info: false,
+                order: [[1, 'asc']],
+                language: { emptyTable: "No zones found" }
+            });
+            
+            $('.form-select').select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#addZoneModal') });
+        });
+        
+        $('#tableSearch').on('keyup', function() { dataTable.search(this.value).draw(); });
+        
+        function applyFilters() {
+            let url = new URL(window.location.href);
+            if ($('#filterZoneType').val()) url.searchParams.set('zone_type', $('#filterZoneType').val());
+            else url.searchParams.delete('zone_type');
+            if ($('#filterInstitution').val()) url.searchParams.set('institution_id', $('#filterInstitution').val());
+            else url.searchParams.delete('institution_id');
+            window.location.href = url.toString();
+        }
+        
+        $('#filterZoneType, #filterInstitution').on('change', applyFilters);
+        $('#clearFiltersBtn').on('click', function() { window.location.href = window.location.pathname; });
+        
+        $('#exportExcelBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-excel').trigger(); });
+        $('#exportCSVBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-csv').trigger(); });
+        $('#printTableBtn').on('click', function(e) { e.preventDefault(); dataTable.button('.buttons-print').trigger(); });
+        
+        new $.fn.dataTable.Buttons(dataTable, {
+            buttons: [
+                { extend: 'excel', filename: 'zones_export' },
+                { extend: 'csv', filename: 'zones_export' },
+                { extend: 'print', title: 'Zones Report' }
+            ]
+        });
+        
+        // ============================================
+        // ADD ZONE (AJAX submission, refresh table)
+        // ============================================
+        $('#addZoneForm').on('submit', function(e) {
+            e.preventDefault();
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
+            
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Creating...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        $('#addZoneModal').modal('hide');
+                        toastr.success(response.message || 'Zone created successfully!');
+                        // Refresh the page to show the new zone
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        toastr.error(response.error || 'Failed to create zone');
+                        submitBtn.prop('disabled', false).html('Create Zone');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'An error occurred';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    toastr.error(errorMsg);
+                    submitBtn.prop('disabled', false).html('Create Zone');
+                }
+            });
+        });
+        
+        // ============================================
+        // VIEW ZONE (Modal, no redirect)
+        // ============================================
+       function viewZone(zoneId) {
+                    $('#viewZoneModal').modal('show');
+                    $('#viewZoneContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+                    $('#editFromViewBtn').hide();
+                    
+                    $.get(`/access/zones/${zoneId}/detail/`, function(response) {
+                        if (response.success) {
+                            $('#viewZoneContent').html(response.html);
+                            $('#editFromViewBtn').show();
+                            $('#editFromViewBtn').off('click').on('click', function() {
+                                $('#viewZoneModal').modal('hide');
+                                editZone(zoneId);
+                            });
+                        } else {
+                            $('#viewZoneContent').html('<div class="alert alert-danger m-3">Failed to load zone details.</div>');
+                        }
+                    }).fail(function() {
+                        $('#viewZoneContent').html('<div class="alert alert-danger m-3">Failed to load zone details.</div>');
+                    });
+                }
+        // ============================================
+        // EDIT ZONE (Load form via AJAX, submit via AJAX)
+        // ============================================
+        function editZone(zoneId) {
+                $('#editZoneModal').modal('show');
+                $('#editZoneContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+                
+                $.get(`/access/zones/${zoneId}/edit-form/`, function(response) {
+                    if (response.success) {
+                        $('#editZoneContent').html(response.html);
+                    } else {
+                        $('#editZoneContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+                    }
+                }).fail(function() {
+                    $('#editZoneContent').html('<div class="alert alert-danger m-3">Failed to load edit form.</div>');
+                });
+            }
+        
+        // ============================================
+        // TOGGLE ZONE STATUS (AJAX)
+        // ============================================
+        function toggleZoneStatus(zoneId) {
+            if (confirm('Are you sure you want to toggle this zone\'s status?')) {
+                $.post(`/access/zones/${zoneId}/toggle-status/`, { csrfmiddlewaretoken: '{{ csrf_token }}' })
+                .done(function(response) {
+                    if (response.success) {
+                        toastr.success('Zone status updated');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(response.error || 'Failed to update');
+                    }
+                })
+                .fail(function() {
+                    toastr.error('An error occurred');
+                });
+            }
+        }
+        
+        // Optional: cascading selects for college/school/department (implement as needed)
+       function loadColleges(institutionId) {
+    if (!institutionId) {
+        $('#collegeSelect').html('<option value="">Select College</option>');
+        $('#schoolSelect').html('<option value="">Select School</option>');
+        $('#departmentSelect').html('<option value="">Select Department</option>');
+        return;
+    }
+    $.get(`/api/v1/institutions/${institutionId}/colleges/`, function(data) {
+        let options = '<option value="">Select College</option>';
+        $.each(data, function(i, college) {
+            options += `<option value="${college.id}">${college.name}</option>`;
+        });
+        $('#collegeSelect').html(options);
+        // Reset lower levels
+        $('#schoolSelect').html('<option value="">Select School</option>');
+        $('#departmentSelect').html('<option value="">Select Department</option>');
+    }).fail(function() {
+        toastr.error('Failed to load colleges');
+    });
+}
+
+function loadSchools(collegeId) {
+    if (!collegeId) {
+        $('#schoolSelect').html('<option value="">Select School</option>');
+        $('#departmentSelect').html('<option value="">Select Department</option>');
+        return;
+    }
+    $.get(`/api/v1/colleges/${collegeId}/schools/`, function(data) {
+        let options = '<option value="">Select School</option>';
+        $.each(data, function(i, school) {
+            options += `<option value="${school.id}">${school.name}</option>`;
+        });
+        $('#schoolSelect').html(options);
+        $('#departmentSelect').html('<option value="">Select Department</option>');
+    }).fail(function() {
+        toastr.error('Failed to load schools');
+    });
+}
+
+function loadDepartments(schoolId) {
+    if (!schoolId) {
+        $('#departmentSelect').html('<option value="">Select Department</option>');
+        return;
+    }
+    $.get(`/api/v1/schools/${schoolId}/departments/`, function(data) {
+        let options = '<option value="">Select Department</option>';
+        $.each(data, function(i, dept) {
+            options += `<option value="${dept.id}">${dept.name}</option>`;
+        });
+        $('#departmentSelect').html(options);
+    }).fail(function() {
+        toastr.error('Failed to load departments');
+    });
+}
+
+// Bind events (make sure your selectors match the actual IDs)
+$('#addZoneModal select[name="institution"]').on('change', function() {
+    loadColleges($(this).val());
+});
+$('#collegeSelect').on('change', function() {
+    loadSchools($(this).val());
+});
+$('#schoolSelect').on('change', function() {
+    loadDepartments($(this).val());
+});
+        
+        
+    </script>
+</body>
+</html>

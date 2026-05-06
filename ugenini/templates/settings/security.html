@@ -1,0 +1,311 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Security Settings - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .nav-pills .nav-link {
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #696cff;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+           {% include 'includes/navbar.html' %}
+
+            <!-- Layout page -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-shield fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Security Settings</span>
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <div class="row">
+                            <!-- Sidebar Tabs -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="nav nav-pills flex-column gap-1" role="tablist">
+                                            <a href="{% url 'settings:general' %}" class="nav-link">
+                                                <i class="bx bx-cog me-2"></i> General
+                                            </a>
+                                            <a href="{% url 'settings:security' %}" class="nav-link active">
+                                                <i class="bx bx-shield me-2"></i> Security
+                                            </a>
+                                            <a href="{% url 'settings:notification' %}" class="nav-link">
+                                                <i class="bx bx-bell me-2"></i> Notifications
+                                            </a>
+                                            
+                                            <a href="{% url 'settings:integration' %}" class="nav-link">
+                                                <i class="bx bx-link me-2"></i> Integrations
+                                            </a>
+                                            <a href="{% url 'settings:audit_logs' %}" class="nav-link">
+                                                <i class="bx bx-history me-2"></i> Audit Logs
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="col-md-9">
+                                <!-- Security Settings Form -->
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Security Settings</h5>
+                                        <small class="text-muted">Configure system security policies</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST" action="{% url 'settings:security' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="security_settings" value="1">
+                                            
+                                            <div class="row g-4">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Session Timeout (minutes)</label>
+                                                    <select name="session_timeout" class="form-select">
+                                                        <option value="15" {% if form.session_timeout.value == 15 %}selected{% endif %}>15 minutes</option>
+                                                        <option value="30" {% if form.session_timeout.value == 30 %}selected{% endif %}>30 minutes</option>
+                                                        <option value="60" {% if form.session_timeout.value == 60 %}selected{% endif %}>60 minutes</option>
+                                                        <option value="120" {% if form.session_timeout.value == 120 %}selected{% endif %}>120 minutes</option>
+                                                    </select>
+                                                    <small class="text-muted">User session expiration time</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Max Login Attempts</label>
+                                                    <select name="max_login_attempts" class="form-select">
+                                                        <option value="3" {% if form.max_login_attempts.value == 3 %}selected{% endif %}>3 attempts</option>
+                                                        <option value="5" {% if form.max_login_attempts.value == 5 %}selected{% endif %}>5 attempts</option>
+                                                        <option value="10" {% if form.max_login_attempts.value == 10 %}selected{% endif %}>10 attempts</option>
+                                                    </select>
+                                                    <small class="text-muted">Failed login attempts before lockout</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Password Expiry (days)</label>
+                                                    <select name="password_expiry_days" class="form-select">
+                                                        <option value="30" {% if form.password_expiry_days.value == 30 %}selected{% endif %}>30 days</option>
+                                                        <option value="60" {% if form.password_expiry_days.value == 60 %}selected{% endif %}>60 days</option>
+                                                        <option value="90" {% if form.password_expiry_days.value == 90 %}selected{% endif %}>90 days</option>
+                                                        <option value="0" {% if form.password_expiry_days.value == 0 %}selected{% endif %}>Never</option>
+                                                    </select>
+                                                    <small class="text-muted">Password expiration period</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch mt-4">
+                                                        <input type="checkbox" name="require_strong_password" class="form-check-input" id="requireStrongPassword" 
+                                                               {% if form.require_strong_password.value %}checked{% endif %}>
+                                                        <label class="form-check-label" for="requireStrongPassword">Require Strong Password</label>
+                                                    </div>
+                                                    <small class="text-muted">Passwords must contain uppercase, lowercase, numbers, and special characters</small>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch mt-2">
+                                                        <input type="checkbox" name="two_factor_auth" class="form-check-input" id="twoFactorAuth" 
+                                                               {% if form.two_factor_auth.value %}checked{% endif %}>
+                                                        <label class="form-check-label" for="twoFactorAuth">Two-Factor Authentication (2FA)</label>
+                                                    </div>
+                                                    <small class="text-muted">Require OTP code for all user logins</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-4">
+                                                <button type="submit" class="btn btn-primary">Save Security Settings</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Change Password Card -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Change Password</h5>
+                                        <small class="text-muted">Update your account password</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST" action="{% url 'settings:security' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="change_password" value="1">
+                                            
+                                            <div class="row g-3">
+                                                <div class="col-12">
+                                                    <label class="form-label">Current Password</label>
+                                                    <input type="password" name="old_password" class="form-control" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">New Password</label>
+                                                    <input type="password" name="new_password1" class="form-control" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Confirm New Password</label>
+                                                    <input type="password" name="new_password2" class="form-control" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-4">
+                                                <button type="submit" class="btn btn-primary">Change Password</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

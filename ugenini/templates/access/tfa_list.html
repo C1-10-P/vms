@@ -1,0 +1,986 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Dashboard </title>
+    <meta name="description" content="Visitor Management System Dashboard" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- Toastr for notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .realtime-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+
+  <body>
+    <!-- Layout wrapper -->
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+         <!-- Sidebar Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo">
+                                <img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo">
+                            </span>
+                            <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+
+                <div class="menu-inner-shadow"></div>
+
+                <ul class="menu-inner py-1">
+                    <!-- Dashboard -->
+                    <li class="menu-item active">
+                        <a href="{% url 'dashboard:home' %}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                            <div data-i18n="Analytics">Dashboard</div>
+                        </a>
+                    </li>
+                    
+                    <!-- Access Management -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-layout"></i>
+                            <div data-i18n="Layouts">Access</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'access:zone_list' %}" class="menu-link"><div data-i18n="Without menu">Zones</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:zone_map' %}" class="menu-link"><div data-i18n="Without navbar">Maps</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:permission_list' %}" class="menu-link"><div data-i18n="Without navbar">Permissions</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:log_list' %}" class="menu-link"><div data-i18n="Without navbar">Logs</div></a></li>
+                            <li class="menu-item"><a href="{% url 'access:geofence_list' %}" class="menu-link"><div data-i18n="Container">Geofence</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Classroom -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-copy"></i>
+                            <div data-i18n="Extended UI">Classroom</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div data-i18n="Perfect Scrollbar">Roll Call</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div data-i18n="Text Divider">Enrollment</div></a></li>
+                            <li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div data-i18n="Text Divider">Sessions</div></a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Core -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-cube-alt"></i>
+                            <div data-i18n="Misc">Core</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div data-i18n="Error">College</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div data-i18n="Error">School</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div data-i18n="Error">Department</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div data-i18n="Under Maintenance">Program</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div data-i18n="Error">Person</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div data-i18n="Under Maintenance">Staff</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div data-i18n="Under Maintenance">Students</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div data-i18n="Error">Units</div></a></li>
+                            <li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div data-i18n="Under Maintenance">Class</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Devices -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-collection"></i>
+                            <div data-i18n="Extended UI">Devices</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div data-i18n="Perfect Scrollbar">Edge</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div data-i18n="Text Divider">Monitor</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div data-i18n="Text Divider">OTA</div></a></li>
+                            <li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div data-i18n="Text Divider">Firmware</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- VMS -->
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-box"></i>
+                            <div data-i18n="Extended UI">VMS</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link">
+                                <div data-i18n="Perfect Scrollbar">Visitors</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link">
+                                <div data-i18n="Perfect Scrollbar">Check In</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:tracking' %}" class="menu-link"
+                                ><div data-i18n="Text Divider">Tracking</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:visitor_map' %}" class="menu-link">
+                                <div data-i18n="Text Divider">Maps</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:session_list' %}" class="menu-link"><div data-i18n="Text Divider">Sessions</div></a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Reports -->
+                    
+                    
+                    <!-- Settings -->
+                    <li class="menu-header small text-uppercase">
+                        <span class="menu-header-text">Settings</span>
+                    </li>
+                    
+                    <li class="menu-item">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-dock-top"></i>
+                            <div data-i18n="Account Settings">Configurations</div>
+                        </a>
+                        <ul class="menu-sub">
+                        <li class="menu-item"><a href="{% url 'settings:general' %}" class="menu-link"><div data-i18n="Error">General</div></a></li>
+                        <li class="menu-item"><a href="{% url 'users:list' %}" class="menu-link"><div data-i18n="Error">Users</div></a></li>
+                        <li class="menu-item"><a href="{% url 'users:role_list' %}" class="menu-link"><div data-i18n="Error">Roles</div></a></li>
+                        <li class="menu-item"><a href="{% url 'settings:security' %}" class="menu-link"><div data-i18n="Error">Security</div></a></li>
+                        <li class="menu-item"><a href="{% url 'settings:notification' %}" class="menu-link"><div data-i18n="Error">Notification</div></a></li>
+                        <li class="menu-item"><a href="{% url 'settings:audit_logs' %}" class="menu-link"><div data-i18n="Error">Audit Logs</div></a></li>
+                        <li class="menu-item"><a href="{% url 'settings:integration' %}" class="menu-link"><div data-i18n="Error">Integration</div></a></li>
+                        </ul>  
+                    </li> 
+                </ul>
+            </aside>
+            <!-- / Sidebar -->
+
+        <!-- Layout container -->
+        <div class="layout-page">
+         <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <!-- Search -->
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-search fs-4 lh-0"></i>
+                                <input type="text" class="form-control border-0 shadow-none" placeholder="Search..." aria-label="Search..." id="globalSearch" />
+                            </div>
+                        </div>
+                        
+                        <!-- Real-time Stats -->
+                        <div class="navbar-nav align-items-center me-3">
+                            <div class="nav-item">
+                                
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <small class="text-muted me-2"></small>
+                                <span class="badge bg-success realtime-badge" id="realtimeStats">
+                                    <i class="bx bx-current-location"></i> 
+                                    <span id="activeCount">{{ stats.visitors.active|default:0 }}</span> active
+                                </span>
+                            </li>
+
+                            <!-- User Dropdown -->
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ stats.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i><span class="align-middle">My Profile</span></a></li>
+                                   
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>
+                                                <span class="align-middle">Log Out</span>
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+          <!-- Content wrapper -->
+          <div class="content-wrapper">
+            <!-- Content -->
+
+            <div class="container-xxl flex-grow-1 container-p-y">
+              <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Tables /</span> Basic Tables</h4>
+              <div class="card-body">
+                  <div class="row gy-3">
+                    <div class="col-lg-4 col-md-6">
+                      <small class="text-light fw-semibold">Toggle Between Modals</small>
+                      <div class="mt-3">
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalToggle"
+                        >
+                          Launch modal
+                        </button>
+
+                        <!-- Modal 1-->
+                        <div
+                          class="modal fade"
+                          id="modalToggle"
+                          aria-labelledby="modalToggleLabel"
+                          tabindex="-1"
+                          style="display: none"
+                          aria-hidden="true"
+                        >
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="modalToggleLabel">Modal 1</h5>
+                                <button
+                                  type="button"
+                                  class="btn-close"
+                                  data-bs-dismiss="modal"
+                                  aria-label="Close"
+                                ></button>
+                              </div>
+                              <div class="modal-body">Show a second modal and hide this one with the button below.</div>
+                              <div class="modal-footer">
+                                <button
+                                  class="btn btn-primary"
+                                  data-bs-target="#modalToggle2"
+                                  data-bs-toggle="modal"
+                                  data-bs-dismiss="modal"
+                                >
+                                  Open second modal
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Modal 2-->
+                        <div
+                          class="modal fade"
+                          id="modalToggle2"
+                          aria-hidden="true"
+                          aria-labelledby="modalToggleLabel2"
+                          tabindex="-1"
+                        >
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="modalToggleLabel2">Modal 2</h5>
+                                <button
+                                  type="button"
+                                  class="btn-close"
+                                  data-bs-dismiss="modal"
+                                  aria-label="Close"
+                                ></button>
+                              </div>
+                              <div class="modal-body">Hide this modal and show the first with the button below.</div>
+                              <div class="modal-footer">
+                                <button
+                                  class="btn btn-primary"
+                                  data-bs-target="#modalToggle"
+                                  data-bs-toggle="modal"
+                                  data-bs-dismiss="modal"
+                                >
+                                  Back to first
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Modal Scroll long content -->
+                    <div class="col-lg-4 col-md-3">
+                      <small class="text-light fw-semibold">Scrolling long content</small>
+                      <!-- Modal -->
+                     
+                      <!-- Modal -->
+                      <div class="modal fade" id="modalScrollable" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="modalScrollableTitle">Modal title</h5>
+                              <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                              ></button>
+                            </div>
+                            <div class="modal-body">
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                              <p>
+                                Cras mattis consectetur purus sit amet fermentum. Cras justo odio, dapibus ac facilisis
+                                in, egestas eget quam. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
+                              </p>
+                              <p>
+                                Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Vivamus sagittis
+                                lacus vel augue laoreet rutrum faucibus dolor auctor.
+                              </p>
+                              <p>
+                                Aenean lacinia bibendum nulla sed consectetur. Praesent commodo cursus magna, vel
+                                scelerisque nisl consectetur et. Donec sed odio dui. Donec ullamcorper nulla non metus
+                                auctor fringilla.
+                              </p>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Close
+                              </button>
+                              <button type="button" class="btn btn-primary">Save changes</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="demo-inline-spacing">
+                        <!-- Button trigger modal -->
+                        
+
+                        <!-- Button ModalScrollable -->
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalScrollable"
+                        >
+                          Option 2
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Modal Backdrop -->
+                    <div class="col-lg-4 col-md-3">
+                      <small class="text-light fw-semibold">Backdrop</small>
+                      <div class="mt-3">
+                        <!-- Button trigger modal -->
+                        <button
+                          type="button"
+                          class="btn btn-primary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#backDropModal"
+                        >
+                          Launch modal
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="backDropModal" data-bs-backdrop="static" tabindex="-1">
+                          <div class="modal-dialog">
+                            <form class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="backDropModalTitle">Modal title</h5>
+                                <button
+                                  type="button"
+                                  class="btn-close"
+                                  data-bs-dismiss="modal"
+                                  aria-label="Close"
+                                ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="row">
+                                  <div class="col mb-3">
+                                    <label for="nameBackdrop" class="form-label">Name</label>
+                                    <input
+                                      type="text"
+                                      id="nameBackdrop"
+                                      class="form-control"
+                                      placeholder="Enter Name"
+                                    />
+                                  </div>
+                                </div>
+                                <div class="row g-2">
+                                  <div class="col mb-0">
+                                    <label for="emailBackdrop" class="form-label">Email</label>
+                                    <input
+                                      type="text"
+                                      id="emailBackdrop"
+                                      class="form-control"
+                                      placeholder="xxxx@xxx.xx"
+                                    />
+                                  </div>
+                                  <div class="col mb-0">
+                                    <label for="dobBackdrop" class="form-label">DOB</label>
+                                    <input
+                                      type="text"
+                                      id="dobBackdrop"
+                                      class="form-control"
+                                      placeholder="DD / MM / YY"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                  Close
+                                </button>
+                                <button type="button" class="btn btn-primary">Save</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+            <hr class="my-5" />
+
+              <!-- Hoverable Table rows -->
+              <div class="card">
+                <h5 class="card-header">Hoverable rows</h5>
+                <div class="table-responsive text-nowrap">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Project</th>
+                        <th>Client</th>
+                        <th>Users</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="table-border-bottom-0">
+                      <tr>
+                        <td><i class="fab fa-angular fa-lg text-danger me-3"></i> <strong>Angular Project</strong></td>
+                        <td>Albert Cook</td>
+                        <td>
+                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Lilian Fuller"
+                            >
+                              <img src="{% static 'assets/img/avatars/5.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Sophia Wilkerson"
+                            >
+                              <img src="{% static 'assets/img/avatars/6.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Christina Parker"
+                            >
+                              <img src="{% static 'assets/img/avatars/7.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                          </ul>
+                        </td>
+                        <td><span class="badge bg-label-primary me-1">Active</span></td>
+                        <td>
+                          <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-edit-alt me-1"></i> Edit</a
+                              >
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-trash me-1"></i> Delete</a
+                              >
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><i class="fab fa-react fa-lg text-info me-3"></i> <strong>React Project</strong></td>
+                        <td>Barry Hunter</td>
+                        <td>
+                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Lilian Fuller"
+                            >
+                              <img src="{% static 'assets/img/avatars/5.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Sophia Wilkerson"
+                            >
+                              <img src="{% static 'assets/img/avatars/6.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Christina Parker"
+                            >
+                              <img src="{% static 'assets/img/avatars/7.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                          </ul>
+                        </td>
+                        <td><span class="badge bg-label-success me-1">Completed</span></td>
+                        <td>
+                          <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-edit-alt me-1"></i> Edit</a
+                              >
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-trash me-1"></i> Delete</a
+                              >
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><i class="fab fa-vuejs fa-lg text-success me-3"></i> <strong>VueJs Project</strong></td>
+                        <td>Trevor Baker</td>
+                        <td>
+                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Lilian Fuller"
+                            >
+                              <img src="{% static 'assets/img/avatars/5.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Sophia Wilkerson"
+                            >
+                              <img src="{% static 'assets/img/avatars/6.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Christina Parker"
+                            >
+                              <img src="{% static 'assets/img/avatars/7.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                          </ul>
+                        </td>
+                        <td><span class="badge bg-label-info me-1">Scheduled</span></td>
+                        <td>
+                          <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-edit-alt me-1"></i> Edit</a
+                              >
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-trash me-1"></i> Delete</a
+                              >
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <i class="fab fa-bootstrap fa-lg text-primary me-3"></i> <strong>Bootstrap Project</strong>
+                        </td>
+                        <td>Jerry Milton</td>
+                        <td>
+                          <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Lilian Fuller"
+                            >
+                              <img src="{% static 'assets/img/avatars/5.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Sophia Wilkerson"
+                            >
+                              <img src="{% static 'assets/img/avatars/6.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                            <li
+                              data-bs-toggle="tooltip"
+                              data-popup="tooltip-custom"
+                              data-bs-placement="top"
+                              class="avatar avatar-xs pull-up"
+                              title="Christina Parker"
+                            >
+                              <img src="{% static 'assets/img/avatars/7.png' %}" alt="Avatar" class="rounded-circle" />
+                            </li>
+                          </ul>
+                        </td>
+                        <td><span class="badge bg-label-warning me-1">Pending</span></td>
+                        <td>
+                          <div class="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                              <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-edit-alt me-1"></i> Edit</a
+                              >
+                              <a class="dropdown-item" href="javascript:void(0);"
+                                ><i class="bx bx-trash me-1"></i> Delete</a
+                              >
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!--/ Hoverable Table rows -->
+
+              <hr class="my-5" />
+
+              <!-- Responsive Table -->
+              <div class="card">
+                <h5 class="card-header">Responsive Table</h5>
+                <div class="table-responsive text-nowrap">
+                  <table class="table">
+                    <thead>
+                      <tr class="text-nowrap">
+                        <th>#</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                        <th>Table heading</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">1</th>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">2</th>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">3</th>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                        <td>Table cell</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!--/ Responsive Table -->
+            </div>
+            <!-- / Content -->
+
+             <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </footer>
+                    <div class="content-backdrop fade"></div>
+                </div>
+            </div>
+        </div>
+        <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+
+    <!-- Core JS -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <!-- Vendors JS -->
+    <script src="{% static 'assets/vendor/libs/apex-charts/apexcharts.js' %}"></script>
+    
+    <!-- Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    
+    <script>
+    // Dynamic menu active state based on current URL
+    function setActiveMenuItem() {
+        const currentPath = window.location.pathname;
+        const currentUrl = window.location.href;
+        
+        // Remove active class from all menu items and their parents
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelectorAll('.menu-sub .menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Find all menu links
+        const menuLinks = document.querySelectorAll('.menu-link');
+        let activeMenuItem = null;
+        let activeParentItem = null;
+        
+        menuLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href !== '#' && href !== 'javascript:void(0);') {
+                // Check if current URL matches the link href
+                if (currentUrl.includes(href) || currentPath === href) {
+                    activeMenuItem = link.closest('.menu-item');
+                    
+                    // Also find parent menu item if this is a submenu item
+                    const parentSub = link.closest('.menu-sub');
+                    if (parentSub) {
+                        const parentMenuItem = parentSub.closest('.menu-item');
+                        if (parentMenuItem) {
+                            parentMenuItem.classList.add('active');
+                            // Open the parent dropdown
+                            const parentToggle = parentMenuItem.querySelector('.menu-toggle');
+                            if (parentToggle) {
+                                parentToggle.classList.add('active');
+                                const parentSubMenu = parentMenuItem.querySelector('.menu-sub');
+                                if (parentSubMenu) {
+                                    parentSubMenu.style.display = 'block';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add active class to the found menu item
+        if (activeMenuItem) {
+            activeMenuItem.classList.add('active');
+        } else {
+            // If no match found, try to match by URL pattern for sub-pages
+            menuLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);') {
+                    // Check if current path starts with the href (for nested routes)
+                    if (currentPath.startsWith(href) && href !== '/') {
+                        activeMenuItem = link.closest('.menu-item');
+                        const parentSub = link.closest('.menu-sub');
+                        if (parentSub) {
+                            const parentMenuItem = parentSub.closest('.menu-item');
+                            if (parentMenuItem) {
+                                parentMenuItem.classList.add('active');
+                                const parentToggle = parentMenuItem.querySelector('.menu-toggle');
+                                if (parentToggle) {
+                                    parentToggle.classList.add('active');
+                                    const parentSubMenu = parentMenuItem.querySelector('.menu-sub');
+                                    if (parentSubMenu) {
+                                        parentSubMenu.style.display = 'block';
+                                    }
+                                }
+                            }
+                        }
+                        if (activeMenuItem) {
+                            activeMenuItem.classList.add('active');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // If still no active menu, check for dashboard
+        if (!activeMenuItem && currentPath === '/' || currentPath === '/dashboard/') {
+            const dashboardLink = document.querySelector('.menu-item:first-child');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+            }
+        }
+    }
+    
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    
+    // Also run after any AJAX navigation (if using Turbo or similar)
+    // For HTMX or similar frameworks, you might need to trigger on htmx:afterSwap
+    document.body.addEventListener('htmx:afterSwap', setActiveMenuItem);
+</script>
+  </body>
+</html>

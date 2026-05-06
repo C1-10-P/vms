@@ -1,0 +1,207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Visitor Check-out - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .checkout-header {
+            background: linear-gradient(135deg, #ff9f43 0%, #e65100 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Sidebar (same as checkin) -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo"><img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo"></span>
+                        <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+                <div class="menu-inner-shadow"></div>
+                <ul class="menu-inner py-1">
+                    <li class="menu-item"><a href="{% url 'dashboard:home' %}" class="menu-link"><i class="menu-icon tf-icons bx bx-home-circle"></i><div>Dashboard</div></a></li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-layout"></i><div>Access</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'access:zone_list' %}" class="menu-link"><div>Zones</div></a></li><li class="menu-item"><a href="{% url 'access:permission_list' %}" class="menu-link"><div>Permissions</div></a></li><li class="menu-item"><a href="{% url 'access:log_list' %}" class="menu-link"><div>Logs</div></a></li><li class="menu-item"><a href="{% url 'access:geofence_list' %}" class="menu-link"><div>Geofence</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-copy"></i><div>Classroom</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div>Roll Call</div></a></li><li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div>Enrollment</div></a></li><li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div>Sessions</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-cube-alt"></i><div>Core</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div>Colleges</div></a></li><li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div>Schools</div></a></li><li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div>Departments</div></a></li><li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div>Programs</div></a></li><li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div>Persons</div></a></li><li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div>Staff</div></a></li><li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div>Students</div></a></li><li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div>Units</div></a></li><li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div>Classes</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-collection"></i><div>Devices</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div>Edge Nodes</div></a></li><li class="menu-item"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div>Monitor</div></a></li><li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div>OTA</div></a></li><li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div>Firmware</div></a></li></ul>
+                    </li>
+                    <li class="menu-item active open"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-box"></i><div>VMS</div></a>
+                        <ul class="menu-sub" style="display: block;">
+                            <li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link"><div>Visitors</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link"><div>Check In</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:tag_list' %}" class="menu-link"><div>Tags</div></a></li>
+                            
+                            <li class="menu-item"><a href="{% url 'vms:session_list' %}" class="menu-link"><div>Sessions</div></a></li>
+                        </ul>
+                    </li>
+                    <li class="menu-header small text-uppercase"><span class="menu-header-text">Settings</span></li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-dock-top"></i><div>Configurations</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'users:list' %}" class="menu-link"><div>Users</div></a></li><li class="menu-item"><a href="{% url 'users:role_list' %}" class="menu-link"><div>Roles</div></a></li></ul>
+                    </li>
+                </ul>
+            </aside>
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-log-out-circle fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Visitor Check-out</span>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item me-3"><span class="badge bg-warning"><i class="bx bx-log-out"></i> Check-out</span></li>
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <div class="row">
+                            <div class="col-lg-6 mx-auto">
+                                <div class="card">
+                                    <div class="card-header checkout-header text-white">
+                                        <h5 class="card-title mb-0 text-white"><i class="bx bx-log-out-circle me-2"></i>Visitor Check-out</h5>
+                                        <small class="text-white-50">Confirm visitor departure</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <i class="bx bx-info-circle me-1"></i>
+                                            <small>This will mark the visitor as checked out and release any assigned tag.</small>
+                                        </div>
+                                        
+                                        <form method="POST" action="{% url 'vms:checkout' visit.id %}">
+                                            {% csrf_token %}
+                                            <div class="mb-3">
+                                                <label class="form-label">Visitor Name</label>
+                                                <input type="text" class="form-control" value="{{ visit.visitor.person.get_full_name }}" readonly disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">ID Number</label>
+                                                <input type="text" class="form-control" value="{{ visit.visitor.id_number|default:'Not provided' }}" readonly disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Check-in Time</label>
+                                                <input type="text" class="form-control" value="{{ visit.check_in_time|date:'Y-m-d H:i:s' }}" readonly disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Assigned Tag</label>
+                                                <input type="text" class="form-control" value="{{ visit.assigned_tag.tag_uuid|default:'No tag assigned' }}" readonly disabled>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Duration</label>
+                                                <input type="text" class="form-control" value="{{ visit.get_duration }}" readonly disabled>
+                                            </div>
+                                            <div class="mt-4">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="bx bx-log-out me-1"></i> Confirm Check-out
+                                                </button>
+                                                <a href="{% url 'vms:detail' visit.visitor.id %}" class="btn btn-secondary">
+                                                    <i class="bx bx-arrow-back me-1"></i> Cancel
+                                                </a>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+</body>
+</html>

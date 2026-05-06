@@ -1,0 +1,693 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Visitor Tracking - Ugenini VMS</title>
+    <meta name="description" content="Real-time Visitor Tracking" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/apex-charts/apex-charts.css' %}" />
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 0.35rem 0.65rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            display: inline-block;
+        }
+        .status-active { background-color: #e8f5e9; color: #2e7d32; }
+        .avatar-sm {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+        .visitor-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .visitor-row:hover {
+            background-color: #f8f9fa;
+        }
+        .location-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        .refresh-badge {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .refresh-badge:hover {
+            transform: rotate(180deg);
+        }
+        .timeline-item {
+            border-left: 2px solid #e0e0e0;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #696cff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Sidebar Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="{% url 'dashboard:home' %}" class="app-brand-link">
+                        <span class="app-brand-logo demo"><img src="{% static 'assets/img/logo.svg' %}" width="25" alt="Logo"></span>
+                        <span class="app-brand-text demo text-body fw-bolder">Ugenini</span>
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+                        <i class="bx bx-chevron-left bx-sm align-middle"></i>
+                    </a>
+                </div>
+                <div class="menu-inner-shadow"></div>
+                <ul class="menu-inner py-1">
+                    <li class="menu-item"><a href="{% url 'dashboard:home' %}" class="menu-link"><i class="menu-icon tf-icons bx bx-home-circle"></i><div>Dashboard</div></a></li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-layout"></i><div>Access</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'access:zone_list' %}" class="menu-link"><div>Zones</div></a></li><li class="menu-item"><a href="{% url 'access:permission_list' %}" class="menu-link"><div>Permissions</div></a></li><li class="menu-item"><a href="{% url 'access:log_list' %}" class="menu-link"><div>Logs</div></a></li><li class="menu-item"><a href="{% url 'access:geofence_list' %}" class="menu-link"><div>Geofence</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-copy"></i><div>Classroom</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'classroom:check_in' %}" class="menu-link"><div>Roll Call</div></a></li><li class="menu-item"><a href="{% url 'classroom:list' %}" class="menu-link"><div>Enrollment</div></a></li><li class="menu-item"><a href="{% url 'classroom:session_list' %}" class="menu-link"><div>Sessions</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-cube-alt"></i><div>Core</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'core:college_list' %}" class="menu-link"><div>Colleges</div></a></li><li class="menu-item"><a href="{% url 'core:school_list' %}" class="menu-link"><div>Schools</div></a></li><li class="menu-item"><a href="{% url 'core:department_list' %}" class="menu-link"><div>Departments</div></a></li><li class="menu-item"><a href="{% url 'core:program_list' %}" class="menu-link"><div>Programs</div></a></li><li class="menu-item"><a href="{% url 'core:person_list' %}" class="menu-link"><div>Persons</div></a></li><li class="menu-item"><a href="{% url 'core:staff_list' %}" class="menu-link"><div>Staff</div></a></li><li class="menu-item"><a href="{% url 'core:student_list' %}" class="menu-link"><div>Students</div></a></li><li class="menu-item"><a href="{% url 'core:academic_unit_list' %}" class="menu-link"><div>Units</div></a></li><li class="menu-item"><a href="{% url 'core:class_list' %}" class="menu-link"><div>Classes</div></a></li></ul>
+                    </li>
+                    <li class="menu-item"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-collection"></i><div>Devices</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'firmware:node_list' %}" class="menu-link"><div>Edge Nodes</div></a></li><li class="menu-item"><a href="{% url 'firmware:monitor' %}" class="menu-link"><div>Monitor</div></a></li><li class="menu-item"><a href="{% url 'firmware:ota_list' %}" class="menu-link"><div>OTA</div></a></li><li class="menu-item"><a href="{% url 'firmware:firmware_list' %}" class="menu-link"><div>Firmware</div></a></li></ul>
+                    </li>
+                    <li class="menu-item active open"><a href="javascript:void(0)" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-box"></i><div>VMS</div></a>
+                        <ul class="menu-sub" style="display: block;">
+                            <li class="menu-item"><a href="{% url 'vms:list' %}" class="menu-link"><div>Visitors</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:checkin' %}" class="menu-link"><div>Check In</div></a></li>
+                            
+                            <li class="menu-item"><a href="{% url 'vms:visitor_map' %}" class="menu-link"><div>Maps</div></a></li>
+                            <li class="menu-item"><a href="{% url 'vms:session_list' %}" class="menu-link"><div>Sessions</div></a></li>
+                        </ul>
+                    </li>
+                    <li class="menu-header small text-uppercase"><span class="menu-header-text">Settings</span></li>
+                    <li class="menu-item"><a href="javascript:void(0);" class="menu-link menu-toggle"><i class="menu-icon tf-icons bx bx-dock-top"></i><div>Configurations</div></a>
+                        <ul class="menu-sub"><li class="menu-item"><a href="{% url 'users:list' %}" class="menu-link"><div>Users</div></a></li><li class="menu-item"><a href="{% url 'users:role_list' %}" class="menu-link"><div>Roles</div></a></li></ul>
+                    </li>
+                </ul>
+            </aside>
+            <!-- / Sidebar -->
+
+            <div class="layout-page">
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)"><i class="bx bx-menu bx-sm"></i></a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-target-lock fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">Real-time Visitor Tracking</span>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item me-3">
+                                <span class="badge bg-primary">
+                                    <i class="bx bx-current-location"></i> 
+                                    <span id="activeCount">{{ active_visitors|length }}</span> active
+                                </span>
+                            </li>
+                            <li class="nav-item me-3">
+                                <i class="bx bx-refresh refresh-badge fs-5" onclick="refreshData()" title="Refresh data"></i>
+                            </li>
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" /></div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><div class="d-flex"><div class="flex-shrink-0 me-3"><div class="avatar avatar-online"><img src="{% static 'assets/img/avatars/1.png' %}" alt /></div></div><div class="flex-grow-1"><span class="fw-semibold d-block">{{ request.user.get_full_name|default:request.user.username }}</span><small class="text-muted">{{ request.user.role|default:"User"|title }}</small></div></div></a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><form method="POST" action="{% url 'verify:logout' %}">{% csrf_token %}<button type="submit" class="dropdown-item"><i class="bx bx-power-off me-2"></i>Log Out</button></form></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        
+                        <!-- Stats Cards -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Visitors</span><h3 class="mb-0" id="activeVisitorsCount">{{ active_visitors|length }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-primary rounded p-3"><i class="bx bx-user bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Active Zones</span><h3 class="mb-0" id="activeZonesCount">{{ zones|length }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-success rounded p-3"><i class="bx bx-building bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Today's Visitors</span><h3 class="mb-0" id="todayCount">{{ active_visitors|length }}</h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-info rounded p-3"><i class="bx bx-calendar bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card stat-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <div><span class="text-muted mb-1 d-block">Tags Assigned</span><h3 class="mb-0" id="tagsCount"></h3></div>
+                                            <div class="avatar flex-shrink-0"><span class="badge bg-label-warning rounded p-3"><i class="bx bx-tag bx-sm"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="window.location.href='{% url 'vms:visitor_map' %}'">
+                                    <i class="bx bx-map me-1"></i> View Map
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="window.location.href='{% url 'vms:live_tracking' %}'">
+                                    <i class="bx bx-current-location me-1"></i> Live Tracking
+                                </button>
+                            </div>
+                            <div>
+                                <span class="text-muted small" id="lastUpdateTime"></span>
+                            </div>
+                        </div>
+
+                        <!-- Active Visitors Table -->
+                            <div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="bx bx-current-location me-1"></i> Active Visitors
+        </h5>
+        <small class="text-muted">
+            Real-time location and status of visitors on campus
+        </small>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover" id="trackingTable">
+           <!-- Update the table headers in tracking.html -->
+<thead>
+    <tr>
+        <th>Visitor</th>
+        <th>Tag ID</th>
+        <th>Check-in Time</th>
+        <th>Last Location</th>
+        <th>Distance</th>
+        <th>Last Seen</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+
+            <tbody id="trackingTableBody">
+                {% for visitor in active_visitors %}
+                <tr class="visitor-row" data-visitor-id="{{ visitor.id }}">
+
+                    <!-- Visitor -->
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-2">
+                                <i class="bx bx-user text-primary"></i>
+                            </div>
+                            <div>
+                                <strong>{{ visitor.name }}</strong>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Tag -->
+                    <td>
+                        <code class="small">
+                            {{ visitor.tag_id|default:"—"|truncatechars:12 }}
+                        </code>
+                    </td>
+
+                    <!-- Check-in -->
+                    <td>
+                        {{ visitor.check_in_time|date:"H:i"|default:"—" }}
+                    </td>
+
+                    <!-- Location -->
+                    <td>
+                        <span class="location-badge">
+                            <i class="bx bx-map me-1"></i>
+                            {{ visitor.last_location|default:"Unknown" }}
+                        </span>
+                    </td>
+
+                    <!-- Last Seen -->
+                    <td>
+    {% if visitor.rssi %}
+        <small class="text-muted">
+            <i class="bx bx-ruler me-1"></i>
+            {{ visitor.distance|default:"—" }}
+        </small>
+    {% else %}
+        <span class="text-muted">—</span>
+    {% endif %}
+</td>
+<td>
+    {% if visitor.rssi %}
+        {% if visitor.rssi > -50 %}
+        <span class="badge bg-success" title="Excellent signal">
+            <i class="bx bx-signal-4 me-1"></i>
+        </span>
+        {% elif visitor.rssi > -60 %}
+        <span class="badge bg-info" title="Good signal">
+            <i class="bx bx-signal-3 me-1"></i>
+        </span>
+        {% elif visitor.rssi > -70 %}
+        <span class="badge bg-warning" title="Fair signal">
+            <i class="bx bx-signal-2 me-1"></i>
+        </span>
+        {% else %}
+        <span class="badge bg-danger" title="Poor signal">
+            <i class="bx bx-signal-1 me-1"></i>
+        </span>
+        {% endif %}
+    {% else %}
+        <span class="text-muted">—</span>
+    {% endif %}
+</td>
+
+                    <!-- Status -->
+                    <td>
+                        <span class="status-badge status-active">
+                            Active
+                        </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button type="button"
+                                    class="btn p-0 dropdown-toggle hide-arrow"
+                                    data-bs-toggle="dropdown">
+                                <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+
+                            <div class="dropdown-menu dropdown-menu-end">
+
+                                <a class="dropdown-item"
+                                   href="{% url 'vms:detail' visitor.id %}">
+                                    <i class="bx bx-show-alt me-1"></i>
+                                    View Details
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="viewMovementHistory({{ visitor.id }})">
+                                    <i class="bx bx-history me-1"></i>
+                                    Movement History
+                                </a>
+
+                                <a class="dropdown-item"
+                                   href="javascript:void(0);"
+                                   onclick="trackVisitor({{ visitor.id }})">
+                                    <i class="bx bx-target-lock me-1"></i>
+                                    Track Now
+                                </a>
+
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="bx bx-current-location bx-lg text-muted mb-3 d-block"></i>
+                        <h6 class="text-muted">No active visitors</h6>
+                        <p class="text-muted small">
+                            Check back later for visitor tracking
+                        </p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">© <script>document.write(new Date().getFullYear());</script> Ugenini VMS</div>
+                            <div><a href="#" class="footer-link me-4">Terms</a><a href="#" class="footer-link fw-bolder">Privacy</a></div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movement History Modal (Scrollable) -->
+    <div class="modal fade" id="movementHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-history me-2"></i>Movement History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="movementHistoryContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        {% if messages %}{% for message in messages %}toastr.{{ message.tags|default:'success' }}('{{ message }}');{% endfor %}{% endif %}
+
+        let dataTable;
+        
+        $(document).ready(function() {
+            dataTable = $('#trackingTable').DataTable({
+                responsive: true,
+                paging: true,
+                pageLength: 10,
+                order: [[2, 'desc']],
+                language: { emptyTable: "No active visitors" }
+            });
+            
+            updateLastUpdateTime();
+        });
+        
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdateTime').innerHTML = `<i class="bx bx-time me-1"></i> Last updated: ${now.toLocaleTimeString()}`;
+        }
+        
+        function refreshData() {
+            $('#trackingTableBody').html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div></td></tr>');
+            
+            $.get('/vms/api/tracking/refresh/', function(data) {
+                if (data.success) {
+                    const tbody = $('#trackingTableBody');
+                    tbody.empty();
+                    
+                    if (data.visitors.length === 0) {
+                        tbody.html('<tr><td colspan="8" class="text-center py-5"><i class="bx bx-current-location bx-lg text-muted mb-3 d-block"></i><h6 class="text-muted">No active visitors</h6></td></tr>');
+                    } else {
+                        data.visitors.forEach(visitor => {
+                            let signalBadge = '';
+                            if (visitor.rssi) {
+                                if (visitor.rssi > -50) {
+                                    signalBadge = '<span class="badge bg-success" title="Excellent signal"><i class="bx bx-signal-4"></i></span>';
+                                } else if (visitor.rssi > -60) {
+                                    signalBadge = '<span class="badge bg-info" title="Good signal"><i class="bx bx-signal-3"></i></span>';
+                                } else if (visitor.rssi > -70) {
+                                    signalBadge = '<span class="badge bg-warning" title="Fair signal"><i class="bx bx-signal-2"></i></span>';
+                                } else {
+                                    signalBadge = '<span class="badge bg-danger" title="Poor signal"><i class="bx bx-signal-1"></i></span>';
+                                }
+                            } else {
+                                signalBadge = '<span class="text-muted">—</span>';
+                            }
+                            
+                            const row = `
+                                <tr class="visitor-row" data-visitor-id="${visitor.id}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <i class="bx bx-user text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <strong>${escapeHtml(visitor.name)}</strong>
+                                            </div>
+                                        </div>
+                                    </td
+                                    <td><code class="small">${escapeHtml(visitor.tag_id) || '—'}</code></td
+                                    <td>${visitor.check_in_time}</td
+                                    <td><span class="location-badge"><i class="bx bx-map me-1"></i> ${escapeHtml(visitor.last_location) || 'Unknown'}</span></td
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            ${signalBadge}
+                                            <small class="text-muted">${visitor.distance}</small>
+                                        </div>
+                                    </td
+                                    <td>${visitor.last_seen}</td
+                                    <td><span class="status-badge status-active">Active</span></td
+                                    <td>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                <i class="bx bx-dots-vertical-rounded"></i>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="/vms/visitors/${visitor.id}/"><i class="bx bx-show-alt me-1"></i> View Details</a>
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="viewMovementHistory(${visitor.id})"><i class="bx bx-history me-1"></i> Movement History</a>
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="trackVisitor(${visitor.id})"><i class="bx bx-target-lock me-1"></i> Track Now</a>
+                                            </div>
+                                        </div>
+                                    </td
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                    }
+                    
+                    document.getElementById('activeVisitorsCount').innerText = data.visitors.length;
+                    document.getElementById('activeCount').innerText = data.visitors.length;
+                    
+                    updateLastUpdateTime();
+                    toastr.success('Data refreshed');
+                    
+                    if (dataTable) {
+                        dataTable.destroy();
+                    }
+                    dataTable = $('#trackingTable').DataTable({
+                        responsive: true,
+                        paging: true,
+                        pageLength: 10,
+                        order: [[2, 'desc']],
+                        language: { emptyTable: "No active visitors" }
+                    });
+                } else {
+                    toastr.error('Failed to refresh data');
+                }
+            }).fail(function() {
+                toastr.error('Error refreshing data');
+                location.reload();
+            });
+        }
+        
+        function viewMovementHistory(visitorId) {
+            $('#movementHistoryModal').modal('show');
+            $('#movementHistoryContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+            
+            $.get(`/vms/visitors/${visitorId}/movements/`, function(data) {
+                if (data.movements && data.movements.length > 0) {
+                    let html = '<div class="timeline">';
+                    data.movements.forEach(movement => {
+                        html += `
+                            <div class="timeline-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>${escapeHtml(movement.zone)}</strong>
+                                    <small class="text-muted">${movement.timestamp}</small>
+                                </div>
+                                <p class="small text-muted mb-0">
+                                    <i class="bx bx-bluetooth me-1"></i> Signal: ${movement.rssi} dBm
+                                    <span class="ms-2"><i class="bx bx-ruler me-1"></i> Distance: ${movement.distance} m</span>
+                                </p>
+                                <span class="badge ${movement.event_type === 'enter' ? 'bg-success' : 'bg-warning'} mt-1">
+                                    ${movement.event_type === 'enter' ? 'Entered' : 'Exited'}
+                                </span>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    $('#movementHistoryContent').html(html);
+                } else {
+                    $('#movementHistoryContent').html('<div class="text-center py-4 text-muted">No movement history available</div>');
+                }
+            }).fail(function() {
+                $('#movementHistoryContent').html('<div class="alert alert-danger m-3">Failed to load movement history</div>');
+            });
+        }
+        
+        function trackVisitor(visitorId) {
+            window.location.href = `/vms/live-tracking/?visitor=${visitorId}`;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Auto-refresh every 30 seconds
+        let refreshInterval = setInterval(refreshData, 30000);
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearInterval(refreshInterval);
+            } else {
+                refreshInterval = setInterval(refreshData, 30000);
+                refreshData();
+            }
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+
+        function viewMovementHistory(visitorId) {
+    $('#movementHistoryModal').modal('show');
+    $('#movementHistoryContent').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>');
+    
+    $.get(`/vms/visitors/${visitorId}/movements/`, function(data) {
+        if (data.movements && data.movements.length > 0) {
+            let html = '<div class="timeline">';
+            data.movements.forEach(movement => {
+                let qualityBadge = '';
+                if (movement.signal_quality) {
+                    qualityBadge = `<span class="badge bg-${movement.signal_quality.color} ms-2">${movement.signal_quality.description}</span>`;
+                }
+                
+                html += `
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${escapeHtml(movement.zone)}</strong>
+                                ${qualityBadge}
+                            </div>
+                            <small class="text-muted">${movement.timestamp}</small>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge ${movement.event_type === 'enter' ? 'bg-success' : movement.event_type === 'exit' ? 'bg-warning' : 'bg-info'} me-2">
+                                ${movement.event_type === 'enter' ? 'Entered' : movement.event_type === 'exit' ? 'Exited' : 'Movement'}
+                            </span>
+                            <small class="text-muted">
+                                <i class="bx bx-signal-${movement.signal_quality?.level || '2'} me-1"></i>
+                                RSSI: ${movement.rssi || '—'} dBm
+                            </small>
+                            ${movement.distance > 0 ? `<small class="text-muted ms-2"><i class="bx bx-ruler me-1"></i> Distance: ${movement.distance} m</small>` : ''}
+                            ${movement.accuracy ? `<small class="text-muted ms-2"><i class="bx bx-target-lock me-1"></i> Accuracy: ${movement.accuracy}%</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            $('#movementHistoryContent').html(html);
+        } else {
+            $('#movementHistoryContent').html('<div class="text-center py-4 text-muted">No movement history available</div>');
+        }
+    }).fail(function() {
+        $('#movementHistoryContent').html('<div class="alert alert-danger m-3">Failed to load movement history</div>');
+    });
+}
+    </script>
+</body>
+</html>

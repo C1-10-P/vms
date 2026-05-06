@@ -1,0 +1,482 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>General Settings - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .nav-pills .nav-link {
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #696cff;
+            color: white;
+        }
+        .timezone-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 0.375rem;
+        }
+        .preview-box {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            {% include 'includes/navbar.html' %}
+
+            <!-- Layout page -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center">
+                                <i class="bx bx-cog fs-4 lh-0 me-2"></i>
+                                <span class="text-muted">General Settings</span>
+                            </div>
+                        </div>
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            
+
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="{% static 'assets/img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-semibold d-block">{{ request.user.full_name|default:request.user.username }}</span>
+                                                    <small class="text-muted">{{ request.user.role|default:"User"|title }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bx bx-user me-2"></i>My Profile</a></li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <form method="POST" action="{% url 'verify:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bx bx-power-off me-2"></i>Log Out
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <div class="container-xxl flex-grow-1 container-p-y">
+                        <div class="row">
+                            <!-- Sidebar Tabs -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="nav nav-pills flex-column gap-1" role="tablist">
+                                            <a href="{% url 'settings:general' %}" class="nav-link active">
+                                                <i class="bx bx-cog me-2"></i> General
+                                            </a>
+                                            <a href="{% url 'settings:security' %}" class="nav-link">
+                                                <i class="bx bx-shield me-2"></i> Security
+                                            </a>
+                                            <a href="{% url 'settings:notification' %}" class="nav-link">
+                                                <i class="bx bx-bell me-2"></i> Notifications
+                                            </a>
+                                            
+                                            <a href="{% url 'settings:integration' %}" class="nav-link">
+                                                <i class="bx bx-link me-2"></i> Integrations
+                                            </a>
+                                            <a href="{% url 'settings:audit_logs' %}" class="nav-link">
+                                                <i class="bx bx-history me-2"></i> Audit Logs
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="col-md-9">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">General Settings</h5>
+                                        <small class="text-muted">Configure system-wide general settings</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <form method="POST" action="{% url 'settings:general' %}" id="generalSettingsForm">
+                                            {% csrf_token %}
+                                            
+                                            <div class="row g-4">
+                                                <!-- Site Name -->
+                                                <div class="col-12">
+                                                    <label class="form-label">Site Name</label>
+                                                    <input type="text" name="site_name" class="form-control" 
+                                                           value="{{ form.site_name.value|default:'VMS' }}" placeholder="System Name">
+                                                    <small class="text-muted">This name appears in the browser title and system emails</small>
+                                                </div>
+
+                                                <!-- Site Description -->
+                                                <div class="col-12">
+                                                    <label class="form-label">Site Description</label>
+                                                    <textarea name="site_description" class="form-control" rows="2" 
+                                                              placeholder="System description...">{{ form.site_description.value|default:'' }}</textarea>
+                                                    <small class="text-muted">Brief description of the system</small>
+                                                </div>
+
+                                                <!-- Timezone -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Timezone</label>
+                                                    <div class="input-group">
+                                                        <select name="timezone" class="form-select" id="timezoneSelect">
+                                                            <optgroup label="Africa">
+                                                                <option value="Africa/Nairobi" {% if form.timezone.value == 'Africa/Nairobi' %}selected{% endif %}>Nairobi (EAT) - GMT+3</option>
+                                                                <option value="Africa/Johannesburg" {% if form.timezone.value == 'Africa/Johannesburg' %}selected{% endif %}>Johannesburg (SAST) - GMT+2</option>
+                                                                <option value="Africa/Cairo" {% if form.timezone.value == 'Africa/Cairo' %}selected{% endif %}>Cairo (EET) - GMT+2</option>
+                                                                <option value="Africa/Lagos" {% if form.timezone.value == 'Africa/Lagos' %}selected{% endif %}>Lagos (WAT) - GMT+1</option>
+                                                                <option value="Africa/Kigali" {% if form.timezone.value == 'Africa/Kigali' %}selected{% endif %}>Kigali (CAT) - GMT+2</option>
+                                                                <option value="Africa/Dar_es_Salaam" {% if form.timezone.value == 'Africa/Dar_es_Salaam' %}selected{% endif %}>Dar es Salaam (EAT) - GMT+3</option>
+                                                                <option value="Africa/Kampala" {% if form.timezone.value == 'Africa/Kampala' %}selected{% endif %}>Kampala (EAT) - GMT+3</option>
+                                                            </optgroup>
+                                                            <optgroup label="Europe">
+                                                                <option value="Europe/London" {% if form.timezone.value == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+                                                                <option value="Europe/Paris" {% if form.timezone.value == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
+                                                                <option value="Europe/Berlin" {% if form.timezone.value == 'Europe/Berlin' %}selected{% endif %}>Berlin (CET/CEST)</option>
+                                                                <option value="Europe/Moscow" {% if form.timezone.value == 'Europe/Moscow' %}selected{% endif %}>Moscow (MSK)</option>
+                                                            </optgroup>
+                                                            <optgroup label="Asia">
+                                                                <option value="Asia/Dubai" {% if form.timezone.value == 'Asia/Dubai' %}selected{% endif %}>Dubai (GST) - GMT+4</option>
+                                                                <option value="Asia/Tokyo" {% if form.timezone.value == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST) - GMT+9</option>
+                                                                <option value="Asia/Shanghai" {% if form.timezone.value == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST) - GMT+8</option>
+                                                            </optgroup>
+                                                            <optgroup label="Americas">
+                                                                <option value="America/New_York" {% if form.timezone.value == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
+                                                                <option value="America/Chicago" {% if form.timezone.value == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
+                                                                <option value="America/Denver" {% if form.timezone.value == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
+                                                                <option value="America/Los_Angeles" {% if form.timezone.value == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
+                                                            </optgroup>
+                                                            <optgroup label="Other">
+                                                                <option value="UTC" {% if form.timezone.value == 'UTC' %}selected{% endif %}>UTC (Universal Time)</option>
+                                                            </optgroup>
+                                                        </select>
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="showCurrentTime()">
+                                                            <i class="bx bx-time"></i>
+                                                        </button>
+                                                    </div>
+                                                    <small class="text-muted">Default timezone for all date/time displays</small>
+                                                    <div class="mt-2" id="timezonePreview" style="display: none;">
+                                                        <div class="alert alert-info py-2 small">
+                                                            <i class="bx bx-info-circle"></i>
+                                                            Current time in selected timezone: <strong id="tzCurrentTime"></strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Time Format -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Time Format</label>
+                                                    <div class="row g-2">
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input type="radio" name="time_format" value="24h" class="form-check-input" id="timeFormat24" 
+                                                                       {% if form.time_format.value == '24h' or not form.time_format.value %}checked{% endif %}>
+                                                                <label class="form-check-label" for="timeFormat24">24-hour format</label>
+                                                                <div class="small text-muted">14:30</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="form-check">
+                                                                <input type="radio" name="time_format" value="12h" class="form-check-input" id="timeFormat12"
+                                                                       {% if form.time_format.value == '12h' %}checked{% endif %}>
+                                                                <label class="form-check-label" for="timeFormat12">12-hour format</label>
+                                                                <div class="small text-muted">2:30 PM</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">How times are displayed throughout the system</small>
+                                                </div>
+
+                                                <!-- Date Format -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Date Format</label>
+                                                    <select name="date_format" class="form-select" id="dateFormatSelect">
+                                                        <option value="Y-m-d" {% if form.date_format.value == 'Y-m-d' %}selected{% endif %}>2024-01-31 (ISO)</option>
+                                                        <option value="d/m/Y" {% if form.date_format.value == 'd/m/Y' %}selected{% endif %}>31/01/2024 (DD/MM/YYYY)</option>
+                                                        <option value="m/d/Y" {% if form.date_format.value == 'm/d/Y' %}selected{% endif %}>01/31/2024 (MM/DD/YYYY)</option>
+                                                        <option value="F d, Y" {% if form.date_format.value == 'F d, Y' %}selected{% endif %}>January 31, 2024</option>
+                                                        <option value="d M Y" {% if form.date_format.value == 'd M Y' %}selected{% endif %}>31 Jan 2024</option>
+                                                        <option value="l, F d, Y" {% if form.date_format.value == 'l, F d, Y' %}selected{% endif %}>Monday, January 31, 2024</option>
+                                                    </select>
+                                                    <div class="mt-2 preview-box" id="dateFormatPreview">
+                                                        Preview: <span id="datePreview">January 31, 2024</span>
+                                                    </div>
+                                                    <small class="text-muted">How dates are displayed throughout the system</small>
+                                                </div>
+
+                                                <!-- Items Per Page -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Items Per Page</label>
+                                                    <select name="items_per_page" class="form-select">
+                                                        <option value="10" {% if form.items_per_page.value == 10 %}selected{% endif %}>10 items per page</option>
+                                                        <option value="25" {% if form.items_per_page.value == 25 %}selected{% endif %}>25 items per page</option>
+                                                        <option value="50" {% if form.items_per_page.value == 50 %}selected{% endif %}>50 items per page</option>
+                                                        <option value="100" {% if form.items_per_page.value == 100 %}selected{% endif %}>100 items per page</option>
+                                                        <option value="250" {% if form.items_per_page.value == 250 %}selected{% endif %}>250 items per page</option>
+                                                    </select>
+                                                    <small class="text-muted">Default number of items per page in tables</small>
+                                                </div>
+
+                                                <!-- Week Start Day -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Week Start Day</label>
+                                                    <select name="week_start" class="form-select">
+                                                        <option value="monday" {% if form.week_start.value == 'monday' %}selected{% endif %}>Monday</option>
+                                                        <option value="sunday" {% if form.week_start.value == 'sunday' %}selected{% endif %}>Sunday</option>
+                                                        <option value="saturday" {% if form.week_start.value == 'saturday' %}selected{% endif %}>Saturday</option>
+                                                    </select>
+                                                    <small class="text-muted">First day of the week for calendar views</small>
+                                                </div>
+
+                                                <!-- Language -->
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Default Language</label>
+                                                    <select name="language" class="form-select">
+                                                        <option value="en" {% if form.language.value == 'en' %}selected{% endif %}>English</option>
+                                                        <option value="fr" {% if form.language.value == 'fr' %}selected{% endif %}>French</option>
+                                                        <option value="sw" {% if form.language.value == 'sw' %}selected{% endif %}>Swahili</option>
+                                                        <option value="rw" {% if form.language.value == 'rw' %}selected{% endif %}>Kinyarwanda</option>
+                                                    </select>
+                                                    <small class="text-muted">System interface language</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-4 pt-2">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bx bx-save me-1"></i> Save Changes
+                                                </button>
+                                                <button type="reset" class="btn btn-outline-secondary" onclick="resetForm()">
+                                                    <i class="bx bx-reset me-1"></i> Reset
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- System Information Card -->
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
+                            </div>
+                            <div>
+                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
+                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <script>
+        toastr.options = {"closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "3000"};
+        
+        {% if messages %}
+            {% for message in messages %}
+                toastr.{{ message.tags|default:'success' }}('{{ message }}');
+            {% endfor %}
+        {% endif %}
+        
+        // Update server time every second
+        function updateServerTime() {
+            const timeElement = document.getElementById('serverTime');
+            if (timeElement) {
+                const now = new Date();
+                timeElement.textContent = now.toISOString().slice(0, 19).replace('T', ' ');
+            }
+        }
+        setInterval(updateServerTime, 1000);
+        
+        // Date format preview
+        function updateDatePreview() {
+            const format = document.getElementById('dateFormatSelect').value;
+            const now = new Date();
+            let preview = '';
+            
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            
+            const year = now.getFullYear();
+            const month = months[now.getMonth()];
+            const day = now.getDate();
+            const weekday = days[now.getDay()];
+            
+            switch(format) {
+                case 'Y-m-d':
+                    preview = `${year}-${String(now.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    break;
+                case 'd/m/Y':
+                    preview = `${String(day).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${year}`;
+                    break;
+                case 'm/d/Y':
+                    preview = `${String(now.getMonth()+1).padStart(2,'0')}/${String(day).padStart(2,'0')}/${year}`;
+                    break;
+                case 'F d, Y':
+                    preview = `${month} ${day}, ${year}`;
+                    break;
+                case 'd M Y':
+                    preview = `${day} ${month.slice(0,3)} ${year}`;
+                    break;
+                case 'l, F d, Y':
+                    preview = `${weekday}, ${month} ${day}, ${year}`;
+                    break;
+                default:
+                    preview = `${year}-${String(now.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            }
+            document.getElementById('datePreview').textContent = preview;
+        }
+        
+        document.getElementById('dateFormatSelect').addEventListener('change', updateDatePreview);
+        updateDatePreview();
+        
+        // Show current time in selected timezone
+        function showCurrentTime() {
+            const tz = document.getElementById('timezoneSelect').value;
+            const previewDiv = document.getElementById('timezonePreview');
+            
+            try {
+                const now = new Date();
+                const options = { timeZone: tz, hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', year: 'numeric', month: 'long', day: 'numeric' };
+                const formatter = new Intl.DateTimeFormat('en-US', options);
+                const formattedTime = formatter.format(now);
+                
+                document.getElementById('tzCurrentTime').textContent = formattedTime;
+                previewDiv.style.display = 'block';
+                setTimeout(() => previewDiv.style.display = 'none', 5000);
+            } catch(e) {
+                toastr.error('Invalid timezone');
+            }
+        }
+        
+        function resetForm() {
+            document.getElementById('generalSettingsForm').reset();
+            toastr.info('Form has been reset');
+        }
+        
+        // Form validation
+        document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+            const siteName = this.querySelector('input[name="site_name"]').value.trim();
+            if (!siteName) {
+                e.preventDefault();
+                toastr.error('Site name is required');
+                return false;
+            }
+            return true;
+        });
+        
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.menu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0);' && currentPath === href) {
+                    link.closest('.menu-item')?.classList.add('active');
+                    link.closest('.menu-sub')?.closest('.menu-item')?.classList.add('active');
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setActiveMenuItem);
+    </script>
+    
+    <style>
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+    </style>
+</body>
+</html>
