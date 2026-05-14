@@ -108,7 +108,7 @@ python manage.py seed_db --action reset
 
 1. Login
 
-curl -X POST http://localhost:8000/api/v1/auth/login/ -H "Content-Type: application/json" -d '{"username":"user","password":"password"}
+curl -X POST http://localhost:8000/api/v1/auth/login/ -H "Content-Type: application/json" -d '{"username":"user","password":"password"}'
 
 {
 "refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NjExNjkxOCwiaWF0IjoxNzc2MDMwNTE4LCJqdGkiOiJjOTMwN2Y5N2M4MDI0M2E3YmZiYTdkNjM0M2Y1MzEwMiIsInVzZXJfaWQiOiIyNiJ9.AJhJFX-Dku8auPL-OgZrYreQGLNLTR8Nxcnfiz0RRMo",

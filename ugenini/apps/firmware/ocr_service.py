@@ -97,12 +97,31 @@ class OCRService:
         
         # Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        # Denoise
-        denoised = cv2.fastNlMeansDenoising(gray, h=30)
-        
-        # Apply threshold to get binary image
-        _, thresh = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # Upscale image for OCR
+        gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+
+        # Bilateral filter preserves text edges
+        gray = cv2.bilateralFilter(gray, 11, 17, 17)
+
+        # Sharpen image
+        kernel = np.array([
+                [-1,-1,-1],
+                [-1, 9,-1],
+                [-1,-1,-1]
+        ])
+
+        sharpened = cv2.filter2D(gray, -1, kernel)
+
+        # Adaptive threshold handles uneven lighting
+        thresh = cv2.adaptiveThreshold(
+            sharpened,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            31,
+            2
+        )
         
         # Deskew (correct image rotation)
         coords = np.column_stack(np.where(thresh > 0))
@@ -116,6 +135,49 @@ class OCRService:
             thresh = cv2.warpAffine(thresh, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
         
         return thresh, img
+    
+    def _normalize_text(self, text: str) -> str:
+
+        text = text.upper()
+
+        replacements = {
+            ':': ' ',
+            ';': ' ',
+            '|': ' ',
+            ',': ' ',
+            '\n': ' ',
+        }
+
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+
+        text = re.sub(r'\s+', ' ', text)
+
+        return text.strip()
+    
+    def crop_top_region(self, image):
+
+        if isinstance(image, str):
+            image_data = base64.b64decode(image)
+            np_arr = np.frombuffer(image_data, np.uint8)
+            img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        elif isinstance(image, bytes):
+            np_arr = np.frombuffer(image, np.uint8)
+            img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        elif isinstance(image, Image.Image):
+            img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        else:
+            img = image
+
+        h, w = img.shape[:2]
+
+        # Keep only upper 45% of ID
+        top_crop = img[0:int(h * 0.45), :]
+
+        return top_crop
     
     # ============ Text Extraction ============
     
@@ -133,7 +195,12 @@ class OCRService:
                 img_to_ocr = image
         
         # Configure Tesseract for ID card recognition
-        custom_config = r'--oem 3 --psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/- '
+        custom_config = (
+                            r'--oem 3 '
+                            r'--psm 4 '
+                            r'-c tessedit_char_whitelist='
+                            r'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/- '
+                        )
         
         text = pytesseract.image_to_string(img_to_ocr, config=custom_config)
         
@@ -253,45 +320,67 @@ class OCRService:
         return data
     
     def extract_national_id_info(self, text: str) -> ExtractedData:
-        """
-        Extract Kenyan National ID information
-        Format: ID Number: 12345678, Name: John Doe, etc.
-        """
+
         data = ExtractedData(id_type='national')
+
+        text = self._normalize_text(text)
+
         data.raw_text = text
-        
-        patterns = {
-            # ID Number: 8 digits
-            'id_number': r'(?:ID|ID Number|National ID|ID No)[:\s]+(\d{8})',
-            
-            # Name: Full name
-            'name': r'(?:Name|Full Name)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)',
-            
-            # Date of birth
-            'dob': r'(?:DOB|Date of Birth|Birth Date)[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
-            
-            # Gender
-            'gender': r'(?:Gender|Sex)[:\s]+(Male|Female|M|F)',
-            
-            # Place of birth
-            'birth_place': r'(?:Place of Birth|Birth Place)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
-        }
-        
-        for key, pattern in patterns.items():
-            match = re.search(pattern, text, re.IGNORECASE)
+
+        # ==========================================
+        # ID NUMBER
+        # ==========================================
+
+        id_patterns = [
+            r'ID NUMBER\s+(\d{7,8})',
+            r'ID NO\s+(\d{7,8})',
+            r'\b(\d{7,8})\b'
+        ]
+
+        for pattern in id_patterns:
+            match = re.search(pattern, text)
             if match:
-                value = match.group(1).strip()
-                if key == 'id_number':
-                    data.id_number = value
-                elif key == 'name':
-                    data.full_name = value
-                    name_parts = value.split()
-                    if len(name_parts) >= 2:
-                        data.first_name = name_parts[0]
-                        data.last_name = ' '.join(name_parts[1:])
-                elif key == 'dob':
-                    data.date_of_birth = value
-        
+                data.id_number = match.group(1)
+                break
+
+        # ==========================================
+        # FULL NAMES
+        # ==========================================
+
+        name_patterns = [
+            r'FULL NAMES\s+([A-Z\s]{5,50})',
+            r'NAMES\s+([A-Z\s]{5,50})'
+        ]
+
+        for pattern in name_patterns:
+            match = re.search(pattern, text)
+
+            if match:
+
+                name = match.group(1).strip()
+
+                # Remove accidental extra labels
+                stop_words = [
+                    'DATE',
+                    'SEX',
+                    'PLACE',
+                    'BIRTH'
+                ]
+
+                for stop in stop_words:
+                    if stop in name:
+                        name = name.split(stop)[0].strip()
+
+                data.full_name = name.title()
+
+                parts = data.full_name.split()
+
+                if len(parts) >= 2:
+                    data.first_name = parts[0]
+                    data.last_name = " ".join(parts[1:])
+
+                break
+
         return data
     
     def extract_visitor_info(self, text: str) -> ExtractedData:
@@ -335,6 +424,7 @@ class OCRService:
         try:
             # Step 1: Extract text from image
             extracted_text, ocr_data = self.extract_text(image, engine)
+            extracted_text = self._normalize_text(extracted_text)
             
             if not extracted_text or len(extracted_text.strip()) < 5:
                 return {
@@ -346,7 +436,18 @@ class OCRService:
             # Step 2: Determine ID type if auto
             detected_type = id_type
             if id_type == 'auto':
-                detected_type = self._detect_id_type(extracted_text)
+
+                # Crop only top region of card
+                top_region = self.crop_top_region(image)
+
+                # OCR top region only
+                top_text, _ = self.extract_text(top_region, engine)
+
+                # Normalize OCR text
+                top_text = self._normalize_text(top_text)
+
+                # Detect type using top section
+                detected_type = self._detect_id_type(top_text)
             
             # Step 3: Extract structured data based on type
             if detected_type == 'student':
@@ -390,29 +491,85 @@ class OCRService:
             }
     
     def _detect_id_type(self, text: str) -> str:
-        """Auto-detect ID type from text content"""
-        text_lower = text.lower()
-        
-        # Student ID indicators
-        student_indicators = ['student', 'registration', 'admission', 'course', 'program', 'university']
-        for indicator in student_indicators:
-            if indicator in text_lower:
-                return 'student'
-        
-        # National ID indicators
-        national_indicators = ['national id', 'identification', 'identity card', 'id number', 'republic of kenya']
-        for indicator in national_indicators:
-            if indicator in text_lower:
-                return 'national'
-        
-        # Check for 8-digit ID (Kenyan ID format)
-        if re.search(r'\b\d{8}\b', text):
+
+        text = self._normalize_text(text)
+
+        student_score = 0
+        national_score = 0
+
+        # ==========================================
+        # STUDENT ID DETECTION
+        # ==========================================
+
+        student_patterns = [
+            r'[A-Z]{2,5}\d{2,5}/\d{4}',
+            r'[A-Z]{3,4}\d{3}-\d{4}/\d{4}'
+        ]
+
+        for pattern in student_patterns:
+            if re.search(pattern, text):
+                student_score += 5
+
+        student_keywords = [
+            'REGISTRATION',
+            'ADMISSION',
+            'STUDENT IDENTIFICATION CARD',
+            'UNIVERSITY',
+            'VALID'
+        ]
+
+        for word in student_keywords:
+            if word in text:
+                student_score += 2
+
+        # ==========================================
+        # KENYAN NATIONAL ID
+        # ==========================================
+
+        national_keywords = [
+            'SERIAL NUMBER',
+            'ID NUMBER',
+            'FULL NAMES',
+            'REPUBLIC OF KENYA',
+            'JAMHURI YA KENYA',
+        ]
+
+        for word in national_keywords:
+            if word in text:
+                national_score += 3
+
+        # Kenyan ID number
+        if re.search(r'\b\d{7,8}\b', text):
+            national_score += 4
+
+        # ==========================================
+        # TOP REGION PRIORITY
+        # ==========================================
+
+        lines = text.split()
+
+        top_region = " ".join(lines[:30])
+
+        top_keywords = [
+            'SERIAL NUMBER',
+            'ID NUMBER',
+            'FULL NAMES'
+        ]
+
+        for word in top_keywords:
+            if word in top_region:
+                national_score += 5
+
+        # ==========================================
+        # DECISION
+        # ==========================================
+
+        if national_score >= student_score and national_score >= 7:
             return 'national'
-        
-        # Check for registration number pattern
-        if re.search(r'[A-Z]{3,4}\d{3}-\d{4}/\d{4}', text):
+
+        if student_score > national_score and student_score >= 5:
             return 'student'
-        
+
         return 'visitor'
     
     def _calculate_confidence(self, extracted_data: ExtractedData, ocr_data) -> float:

@@ -69,8 +69,8 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
-# LOGIN_URL = 'verify:login'
-# LOGIN_REDIRECT_URL = 'dashboard:home'
+LOGIN_URL = 'verify:login'
+LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGOUT_REDIRECT_URL = 'verify:login'
 
 SESSION_COOKIE_AGE = 3600  
@@ -197,11 +197,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+#     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+# }
+
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # Keep for web login
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 SIMPLE_JWT = {
@@ -226,11 +236,11 @@ SWAGGER_SETTINGS = {
 }
 
 # MQTT Configuration
-MQTT_BROKER = os.environ.get('MQTT_BROKER', 'localhost')
+MQTT_BROKER = os.environ.get('MQTT_BROKER', '192.168.8.104')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
 MQTT_TLS_PORT = int(os.environ.get('MQTT_TLS_PORT', 8883))
-MQTT_USER = os.environ.get('MQTT_USER', 'vms_backend')
-MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', '')
+MQTT_USER = os.environ.get('MQTT_USER', 'pusha')
+MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD', 'pusha')
 MQTT_KEEPALIVE = int(os.environ.get('MQTT_KEEPALIVE', 60))
 MQTT_USE_TLS = os.environ.get('MQTT_USE_TLS', 'False') == 'True'
 MQTT_CA_CERT = os.environ.get('MQTT_CA_CERT', None)

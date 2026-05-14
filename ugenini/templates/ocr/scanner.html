@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr"
+      data-theme="theme-default"
+      data-assets-path="{% static 'assets' %}/"
+      data-template="vertical-menu-template-free">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>OCR - Ugenini VMS</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+
+    <!-- Perfect Scrollbar -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+
+</head>
+
+<body>
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="row">
+
+        <!-- ================= LEFT: SCANNER ================= -->
+        <div class="col-md-7">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h5><i class="bx bx-camera"></i> OCR Scanner</h5>
+                </div>
+
+                <div class="card-body text-center">
+
+                    <!-- MODE TOGGLE -->
+                    <div class="mb-3 text-start">
+
+                        <label class="form-label">Input Mode</label>
+
+                        <select id="inputMode" class="form-select">
+
+                            <option value="camera" selected>Camera</option>
+
+                            <option value="upload">Upload Image</option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- ================= CAMERA ================= -->
+                    <div id="cameraContainer">
+
+                        <div style="position: relative;">
+
+                            <video id="video"
+                                   width="100%"
+                                   autoplay
+                                   playsinline
+                                   style="border-radius: 8px; background: #000;">
+                            </video>
+
+                            <!-- OCR FRAME -->
+                            <div style="
+                                position:absolute;
+                                top:50%;
+                                left:50%;
+                                transform:translate(-50%,-50%);
+                                width:80%;
+                                height:60%;
+                                border:2px dashed #696cff;
+                                border-radius:12px;
+                                pointer-events:none;">
+                            </div>
+
+                        </div>
+
+                        <canvas id="canvas" style="display:none;"></canvas>
+
+                        <div class="mt-3">
+
+                            <button id="captureBtn" class="btn btn-primary w-100">
+                                <i class="bx bx-camera"></i> Capture & Scan
+                            </button>
+
+                            <button id="retakeBtn"
+                                    class="btn btn-secondary w-100 mt-2"
+                                    style="display:none;">
+                                Retake
+                            </button>
+
+                        </div>
+
+                    </div>
+
+               
+                    <!-- ================= UPLOAD ================= -->
+                    <div id="uploadContainer" style="display:none;">
+
+                        <div class="mt-3 text-start">
+
+                            <label class="form-label">Upload ID Image</label>
+
+                            <input type="file"
+                                id="uploadInput"
+                                class="form-control"
+                                accept="image/*">
+
+                        </div>
+
+                        <!-- Preview -->
+                        <div id="uploadPreview"
+                            class="mt-3 text-center"
+                            style="display:none;">
+                        </div>
+
+                        <!-- ACTION BUTTON -->
+                        <div class="mt-3">
+
+                            <button id="uploadScanBtn"
+                                    class="btn btn-primary w-100"
+                                    disabled>
+
+                                <i class="bx bx-upload"></i> Process Upload
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= RIGHT: RESULTS ================= -->
+        <div class="col-md-5">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h5><i class="bx bx-id-card"></i> Scan Type & Results</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- SCAN TYPE -->
+                    <div class="mb-3">
+
+                        <label class="form-label">Scan Type</label>
+
+                        <select id="scanType" class="form-select">
+
+                            <option value="attendance">Classroom Attendance</option>
+
+                            <option value="visitor">Visitor Check-in</option>
+
+                        </select>
+
+                    </div>
+
+                    <!-- ATTENDANCE -->
+                    <div id="attendanceFields" style="display:none;">
+
+                        <label class="form-label">Class Code</label>
+
+                        <input type="text"
+                               id="classCode"
+                               class="form-control"
+                               placeholder="e.g., TIE4101">
+
+                    </div>
+
+                    <!-- VISITOR -->
+                    <div id="visitorFields" style="display:none;">
+
+                        <label class="form-label">Host Email (optional)</label>
+
+                        <input type="email"
+                               id="hostEmail"
+                               class="form-control"
+                               placeholder="host@example.com">
+
+                        <label class="form-label mt-2">Organization (optional)</label>
+
+                        <input type="text"
+                               id="organization"
+                               class="form-control">
+
+                    </div>
+
+                    <hr>
+
+                    <h6>Extracted Information</h6>
+
+                    <div id="extractedData"
+                         class="bg-light p-3 rounded"
+                         style="min-height:200px; font-family: monospace;">
+
+                        <div class="text-muted">
+                            Waiting for scan...
+                        </div>
+
+                    </div>
+
+                    <button id="confirmBtn"
+                            class="btn btn-success w-100 mt-3"
+                            disabled>
+
+                        <i class="bx bx-check-circle"></i>
+                        Confirm & Proceed
+
+                    </button>
+
+                    <div id="ocrProgress"
+                         style="display:none;"
+                         class="text-center mt-2">
+
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        Processing...
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+<!-- ================= JS ================= -->
+{% block extra_js %}
+
+<script src="{% static 'ocr/js/scanner.js' %}"></script>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+</script>
+
+{% endblock %}
+
+</body>
+</html>

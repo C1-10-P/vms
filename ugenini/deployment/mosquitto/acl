@@ -2,7 +2,7 @@
 # Access Control List for VMS MQTT Topics
 
 # Admin user - full access
-user admin
+user pusha
 topic readwrite #
 
 # ESP32 Devices - publish only to specific topics
@@ -17,7 +17,7 @@ topic write jkuat/system/heartbeat/#
 topic write jkuat/system/status/#
 
 # Backend Service - full access
-user ugenini
+user pusha
 topic readwrite #
 
 # Web Clients - read only specific topics

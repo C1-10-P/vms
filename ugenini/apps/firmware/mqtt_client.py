@@ -3,6 +3,8 @@ import json
 import threading
 import queue
 import ssl
+import time
+import socket
 import logging
 from django.conf import settings
 from django.utils import timezone
@@ -36,12 +38,14 @@ class MQTTClientManager:
             return
         
         self.client = None
-        self.broker_host = getattr(settings, 'MQTT_BROKER', 'localhost')
+        self.broker_host = getattr(settings, 'MQTT_BROKER', '192.168.8.104')
         self.broker_port = getattr(settings, 'MQTT_PORT', 1883)
         self.tls_port = getattr(settings, 'MQTT_TLS_PORT', 8883)
-        self.username = getattr(settings, 'MQTT_USER', '')
-        self.password = getattr(settings, 'MQTT_PASSWORD', '')
+        self.username = getattr(settings, 'MQTT_USER', 'pusha')
+        self.password = getattr(settings, 'MQTT_PASSWORD', 'pusha')
         self.keepalive = getattr(settings, 'MQTT_KEEPALIVE', 60)
+        self._connected_flag = False
+        self._initialized = True
         
         self.message_queue = queue.Queue()
         self.running = False
@@ -85,27 +89,35 @@ class MQTTClientManager:
         'jkuat/visitor/checkout': QRScanMQTTHandlers.handle_checkout_scan,
         }
     
-    def connect(self):
-        """Connect to MQTT broker"""
+    def connect(self, timeout=5):
+        """Connect to MQTT broker with a timeout.
+
+        Args:
+            timeout (int): Maximum seconds to wait for connection acknowledgment.
+
+        Returns:
+            bool: True if connected and CONNACK received, False otherwise.
+        """
         try:
+            # Create a fresh client instance (ensures clean state)
             self.client = mqtt.Client(
                 client_id=f"vms_backend_{timezone.now().timestamp()}",
                 clean_session=True,
                 protocol=mqtt.MQTTv311
             )
-            
+
             # Set callbacks
             self.client.on_connect = self._on_connect
             self.client.on_disconnect = self._on_disconnect
             self.client.on_message = self._on_message
             self.client.on_publish = self._on_publish
             self.client.on_subscribe = self._on_subscribe
-            
-            # Set authentication
+
+            # Authentication
             if self.username:
                 self.client.username_pw_set(self.username, self.password)
-            
-            # Configure TLS for production
+
+            # TLS configuration
             if getattr(settings, 'MQTT_USE_TLS', False):
                 self.client.tls_set(
                     ca_certs=getattr(settings, 'MQTT_CA_CERT', None),
@@ -114,20 +126,46 @@ class MQTTClientManager:
                     cert_reqs=ssl.CERT_REQUIRED,
                     tls_version=ssl.PROTOCOL_TLSv1_2
                 )
-            
-            # Connect
-            self.client.connect(self.broker_host, self.broker_port, self.keepalive)
+
+            # Set a socket timeout to avoid indefinite blocking
+            old_timeout = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(timeout)
+
+            try:
+                # Attempt connection (this is blocking but will respect socket timeout)
+                self.client.connect(self.broker_host, self.broker_port, self.keepalive)
+            finally:
+                socket.setdefaulttimeout(old_timeout)
+
+            # Start network loop
             self.client.loop_start()
-            
+
+            # Wait for on_connect callback to set a flag or for timeout
+            start = time.time()
+            while not self._connected_flag and (time.time() - start) < timeout:
+                time.sleep(0.1)
+
+            if not self._connected_flag:
+                logger.error(f"MQTT connection timeout after {timeout}s")
+                self.client.loop_stop()
+                self.client.disconnect()
+                return False
+
             self.running = True
-            
-            # Start message processor
+
+            # Start message processor thread
             self.worker_thread = threading.Thread(target=self._process_messages, daemon=True)
             self.worker_thread.start()
-            
+
             logger.info(f"MQTT Client connected to {self.broker_host}:{self.broker_port}")
             return True
-            
+
+        except socket.timeout:
+            logger.error(f"MQTT connection timed out (host={self.broker_host}, port={self.broker_port})")
+            return False
+        except ConnectionRefusedError:
+            logger.error(f"MQTT connection refused – is the broker running on {self.broker_host}:{self.broker_port}?")
+            return False
         except Exception as e:
             logger.error(f"MQTT connection failed: {e}")
             return False
@@ -144,7 +182,8 @@ class MQTTClientManager:
         """Callback when connected to broker"""
         if rc == 0:
             logger.info("MQTT connected successfully")
-            
+            self._connected_flag = True
+
             # Subscribe to all required topics
             topics = [
                 ("jkuat/attendance/#", 1),
@@ -158,6 +197,7 @@ class MQTTClientManager:
                 logger.info(f"Subscribed to: {topic}")
         else:
             logger.error(f"MQTT connection failed with code: {rc}")
+            self._connected_flag = False
     
     def _on_disconnect(self, client, userdata, rc):
         """Callback when disconnected"""
@@ -166,22 +206,84 @@ class MQTTClientManager:
         if self.running:
             threading.Timer(5.0, self.connect).start()
     
+    # def _on_message(self, client, userdata, msg):
+    #     """Callback when message received"""
+    #     try:
+    #         payload = json.loads(msg.payload.decode('utf-8'))
+    #         self.message_queue.put({
+    #             'topic': msg.topic,
+    #             'payload': payload,
+    #             'qos': msg.qos,
+    #             'timestamp': timezone.now().isoformat()
+    #         })
+    #         logger.debug(f"MQTT message received: {msg.topic}")
+    #     except json.JSONDecodeError:
+    #         logger.error(f"Invalid JSON payload on {msg.topic}: {msg.payload}")
+    #     except Exception as e:
+    #         logger.error(f"Error processing MQTT message: {e}")
+    
     def _on_message(self, client, userdata, msg):
-        """Callback when message received"""
+        """Callback when message received (robust version)"""
         try:
-            payload = json.loads(msg.payload.decode('utf-8'))
+            raw = msg.payload.decode("utf-8", errors="ignore")
+
+            # ================================
+            # 1. SAFE JSON PARSING
+            # ================================
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError:
+                # fallback for non-JSON payloads
+                payload = {
+                    "raw": raw
+                }
+
+            # ================================
+            # 2. NORMALIZE DATA (CRITICAL)
+            # ================================
+
+            scan_value = (
+                payload.get("data", {}).get("value")
+                or payload.get("qr_data")
+                or payload.get("tag")
+                or payload.get("qr")
+                or payload.get("raw")
+            )
+
+            method = payload.get("method")
+
+            if not method:
+                # auto-detect method
+                if payload.get("tag"):
+                    method = "rfid"
+                elif payload.get("qr_data") or payload.get("qr"):
+                    method = "qr"
+                else:
+                    method = "unknown"
+
+            normalized_payload = {
+                "node": payload.get("node", "unknown"),
+                "type": payload.get("type", "scan"),
+                "method": method,
+                "value": scan_value,
+                "raw": payload,
+            }
+
+            # ================================
+            # 3. QUEUE MESSAGE
+            # ================================
             self.message_queue.put({
-                'topic': msg.topic,
-                'payload': payload,
-                'qos': msg.qos,
-                'timestamp': timezone.now().isoformat()
+                "topic": msg.topic,
+                "payload": normalized_payload,
+                "qos": msg.qos,
+                "timestamp": timezone.now().isoformat()
             })
-            logger.debug(f"MQTT message received: {msg.topic}")
-        except json.JSONDecodeError:
-            logger.error(f"Invalid JSON payload on {msg.topic}: {msg.payload}")
+
+            logger.debug(f"MQTT message received: {msg.topic} | {method} | {scan_value}")
+
         except Exception as e:
             logger.error(f"Error processing MQTT message: {e}")
-    
+
     def _on_publish(self, client, userdata, mid):
         """Callback when message published"""
         logger.debug(f"MQTT message published: {mid}")

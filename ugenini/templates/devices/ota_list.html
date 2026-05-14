@@ -288,7 +288,7 @@
                                         <tr data-session-id="{{ session.id }}">
                                             <td>
                                                 <code class="small">{{ session.session_id|truncatechars:12 }}</code>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <i class="bx bx-microchip me-2 text-primary"></i>
@@ -297,13 +297,13 @@
                                                         <br><small class="text-muted">{{ session.node.node_uuid|truncatechars:8 }}</small>
                                                     </div>
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div>
                                                     <span class="fw-semibold">{{ session.firmware.version }}</span>
                                                     <br><small class="text-muted">{{ session.firmware.release_date|date:"Y-m-d" }}</small>
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 {% if session.status == 'pending' %}
                                                 <span class="status-pending session-badge">Pending</span>
@@ -320,7 +320,7 @@
                                                 {% else %}
                                                 <span class="status-cancelled session-badge">Cancelled</span>
                                                 {% endif %}
-                                            </td
+                                            </td>
                                             <td>
                                                 <div>
                                                     <div class="d-flex justify-content-between small mb-1">
@@ -334,7 +334,7 @@
                                                     <small class="text-muted">Started: {{ session.started_at|timesince }} ago</small>
                                                     {% endif %}
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div class="dropdown">
                                                     <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -352,15 +352,15 @@
                                                         {% endif %}
                                                     </div>
                                                 </div>
-                                            </td
-                                        <tr>
+                                            </td>
+                                        </tr>
                                         {% empty %}
                                         <tr>
                                             <td colspan="6" class="text-center py-5">
                                                 <i class="bx bx-cloud-upload bx-lg text-muted mb-3 d-block"></i>
                                                 <h6 class="text-muted">No OTA sessions found</h6>
                                                 <p class="text-muted small">Click "New OTA Session" to start a firmware update</p>
-                                            </td
+                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -404,17 +404,7 @@
                         </div>
                     </div>
 
-                    <footer class="content-footer footer bg-footer-theme">
-                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                            <div class="mb-2 mb-md-0">
-                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
-                            </div>
-                            <div>
-                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
-                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
-                            </div>
-                        </div>
-                    </footer>
+                    {% include 'includes/footer.html' %}
                 </div>
             </div>
         </div>

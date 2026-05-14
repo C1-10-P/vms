@@ -887,7 +887,7 @@ def import_attendance_excel(request):
     else:
         messages.error(request, "No file selected")
     
-    return redirect('classroom:list')
+    return redirect('classroom:check_in')
 
 # apps/classroom/views.py - Add this method
 
@@ -912,36 +912,34 @@ class AttendanceImportView(LoginRequiredMixin, TemplateView):
         return context
     
     def post(self, request):
-        """Handle Excel file upload and import"""
-        if request.method == 'POST' and request.FILES.get('excel_file'):
-            try:
-                excel_file = request.FILES['excel_file']
-                
-                # Validate file type
-                if not excel_file.name.endswith(('.xlsx', '.xls', '.csv')):
-                    messages.error(request, 'Please upload an Excel file (.xlsx, .xls) or CSV file')
-                    return redirect('classroom:attendance_import')
-                
-                service = AttendanceImportService()
-                result = service.import_from_excel(excel_file, request.user)
-                
-                if result['success']:
-                    success_msg = f"Successfully imported {result['imported']} records."
-                    if result['skipped'] > 0:
-                        success_msg += f" Skipped {result['skipped']} records."
-                    messages.success(request, success_msg)
-                    
-                    if result['errors']:
-                        for error in result['errors'][:5]:
-                            messages.warning(request, error)
-                else:
-                    messages.error(request, result.get('error', 'Import failed'))
-                    
-            except Exception as e:
-                messages.error(request, f"Import failed: {str(e)}")
-        else:
+        file = request.FILES.get('excel_file')
+
+        if not file:
             messages.error(request, "No file selected")
-        
+            return redirect('classroom:attendance_import')
+
+        if not file.name.endswith(('.xlsx', '.xls', '.csv')):
+            messages.error(request, "Invalid file type")
+            return redirect('classroom:attendance_import')
+
+        try:
+            service = AttendanceImportService()
+            result = service.import_from_excel(file, request.user)
+
+            if result['success']:
+                messages.success(
+                    request,
+                    f"Imported {result['imported']} records"
+                )
+            else:
+                messages.error(request, result.get('error', 'Import failed'))
+
+            for err in result.get('errors', [])[:5]:
+                messages.warning(request, err)
+
+        except Exception as e:
+            messages.error(request, str(e))
+
         return redirect('classroom:attendance_list')
 
 
@@ -991,4 +989,27 @@ def export_attendance_records(request):
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
+    return response
+
+from django.http import HttpResponse
+
+def download_import_errors(request):
+    """
+    Download Excel file containing import errors
+    """
+    service = AttendanceImportService()
+
+    # You MUST pass stored error data from session or cache
+    error_data = request.session.get("import_error_rows", [])
+
+    service.error_rows = error_data
+
+    output = service.generate_error_report()
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response["Content-Disposition"] = 'attachment; filename="import_errors.xlsx"'
     return response

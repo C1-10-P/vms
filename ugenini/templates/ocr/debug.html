@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" 
+      data-assets-path="{% static 'assets' %}/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>OCR - Ugenini VMS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/boxicons.css' %}" />
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/theme-default.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    
+    <!-- Helpers -->
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+    
+    <style>
+        .nav-pills .nav-link {
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+        .nav-pills .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #696cff;
+            color: white;
+        }
+        .timezone-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 0.375rem;
+        }
+        .preview-box {
+            background-color: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+{% block title %}OCR Debug Tool{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>🔍 OCR Debug & Tuning</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Upload ID Image</div>
+                <div class="card-body">
+                    <input type="file" id="imageInput" accept="image/*" class="form-control">
+                    <canvas id="previewCanvas" style="max-width:100%; margin-top:10px; display:none;"></canvas>
+                    <div class="mt-3">
+                        <label>OCR Engine</label>
+                        <select id="engineSelect" class="form-select">
+                            <option value="easyocr">EasyOCR (recommended)</option>
+                            <option value="tesseract">Tesseract</option>
+                        </select>
+                    </div>
+                    <button id="processBtn" class="btn btn-primary mt-3">Process</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Results</div>
+                <div class="card-body">
+                    <div id="resultArea">
+                        <p class="text-muted">No image processed yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Manual Correction & Training Data</div>
+                <div class="card-body">
+                    <form id="correctionForm">
+                        <div class="row">
+                            <div class="col-md-4"><label>Full Name</label><input id="corr_name" class="form-control"></div>
+                            <div class="col-md-4"><label>ID Number</label><input id="corr_id" class="form-control"></div>
+                            <div class="col-md-4"><label>Registration</label><input id="corr_reg" class="form-control"></div>
+                        </div>
+                        <button type="button" id="saveCorrectionBtn" class="btn btn-success mt-3">Save Correction (for future training)</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const imageInput = document.getElementById('imageInput');
+const previewCanvas = document.getElementById('previewCanvas');
+const processBtn = document.getElementById('processBtn');
+const engineSelect = document.getElementById('engineSelect');
+const resultArea = document.getElementById('resultArea');
+const corrName = document.getElementById('corr_name');
+const corrId = document.getElementById('corr_id');
+const corrReg = document.getElementById('corr_reg');
+
+imageInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                previewCanvas.width = img.width;
+                previewCanvas.height = img.height;
+                const ctx = previewCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                previewCanvas.style.display = 'block';
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+processBtn.addEventListener('click', async () => {
+    if (!imageInput.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const base64 = e.target.result;
+        const engine = engineSelect.value;
+        resultArea.innerHTML = '<div class="spinner-border text-primary"></div> Processing...';
+        const response = await fetch('/ocr/debug/process/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: `image_base64=${encodeURIComponent(base64)}&engine=${engine}`
+        });
+        const data = await response.json();
+        if (data.success) {
+            let html = `<h6>Raw OCR Text:</h6><pre>${data.raw_text}</pre>`;
+            html += `<h6>Extracted:</h6><ul>`;
+            if (data.structured.full_name) html += `<li>Name: ${data.structured.full_name}</li>`;
+            if (data.structured.id_number) html += `<li>ID Number: ${data.structured.id_number}</li>`;
+            if (data.structured.registration_number) html += `<li>Registration: ${data.structured.registration_number}</li>`;
+            html += `</ul><h6>Confidence (EasyOCR):</h6><ul>`;
+            for (let det of data.details) {
+                html += `<li>${det[1]} (${Math.round(det[2]*100)}%)</li>`;
+            }
+            html += `</ul>`;
+            resultArea.innerHTML = html;
+
+            // Pre-fill correction fields
+            corrName.value = data.structured.full_name || '';
+            corrId.value = data.structured.id_number || '';
+            corrReg.value = data.structured.registration_number || '';
+        } else {
+            resultArea.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    };
+    reader.readAsDataURL(imageInput.files[0]);
+});
+
+document.getElementById('saveCorrectionBtn').addEventListener('click', async () => {
+    // Save corrected data (you can store in a database table for later analysis)
+    const corrected = {
+        name: corrName.value,
+        id: corrId.value,
+        reg: corrReg.value,
+        image: previewCanvas.toDataURL()  // store for retraining later
+    };
+    // Send to server (optional)
+    const response = await fetch('/ocr/save-correction/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify(corrected)
+    });
+    if (response.ok) alert('Correction saved. Thank you for improving the system!');
+    else alert('Failed to save correction.');
+});
+</script>
+{% endblock %}

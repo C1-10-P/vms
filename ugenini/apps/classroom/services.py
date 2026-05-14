@@ -1,6 +1,7 @@
 from typing import Dict
 import pandas as pd
 import openpyxl
+from urllib3 import request
 
 from .models import AttendanceSession
 import uuid
@@ -495,6 +496,7 @@ class AttendanceImportService:
         self.imported_count = 0
         self.skipped_count = 0
         self.errors = []
+        self.error_rows = []
     
     def import_from_excel(self, excel_file, user=None):
         """
@@ -520,101 +522,134 @@ class AttendanceImportService:
             df = self._clean_dataframe(df)
             
             # Process each row
-            with transaction.atomic():
-                for index, row in df.iterrows():
-                    self._process_row(row, index + 2, user)  # +2 for 1-indexed and header row
-            
+            for index, row in df.iterrows():
+                try:
+                    self._process_row(row, index + 2, user)
+                except Exception as e:
+                    self.skipped_count += 1
+                    self.errors.append(f"Row {index + 2}: {str(e)}")
+            # request.session["import_error_rows"] = self.error_rows
             return {
-                'success': True,
-                'imported': self.imported_count,
-                'skipped': self.skipped_count,
-                'errors': self.errors[:10]  # Return first 10 errors
+                "success": True,
+                "imported": self.imported_count,
+                "skipped": self.skipped_count,
+                "errors": self.errors[:10],
+                "has_error_report": len(self.error_rows) > 0
             }
-            
         except Exception as e:
             logger.error(f"Excel import failed: {e}")
             return {
                 'success': False,
                 'error': str(e)
             }
+
+    def _normalize_column(self, col):
+        return col.strip().lower().replace(" ", "_")
     
+    def _map_status(self, x):
+        if pd.isna(x):
+            return None
+        return self.STATUS_MAPPING.get(str(x).strip().lower(), 'failed')
+
     def _clean_dataframe(self, df):
         """Clean and prepare dataframe"""
         # Strip whitespace from column names
-        df.columns = df.columns.str.strip().str.lower()
-        
+        df.columns = [self._normalize_column(c) for c in df.columns]
         # Strip whitespace from string columns
         for col in df.select_dtypes(include=['object']).columns:
             df[col] = df[col].astype(str).str.strip()
         
         # Convert date column to datetime
         if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            df['date'] = pd.to_datetime(df['date'], errors='coerce', dayfirst=True)
         
         # Convert time column if exists
         if 'time' in df.columns:
-            df['time'] = pd.to_datetime(df['time'], format='%H:%M:%S', errors='coerce').dt.time
+            df['time'] = pd.to_datetime(df['time'], errors='coerce').dt.time
         
         # Map status values
         if 'status' in df.columns:
-            df['status'] = df['status'].map(lambda x: self.STATUS_MAPPING.get(str(x).lower(), 'failed'))
+            df['status'] = df['status'].apply(self._map_status)
         
         # Drop rows with missing required data
-        df = df.dropna(subset=['student_reg', 'class_code', 'date', 'status'])
+        df = df.dropna(subset=['student_reg', 'class_code', 'date'])
+        df = df[df['status'].notna()]
         
         return df
     
     def _process_row(self, row, row_number, user):
         """Process a single row of attendance data"""
         try:
-            # Look up student
+            # =========================
+            # FIX 8: Student lookup
+            # =========================
             student = Student.objects.filter(
                 student_reg_number=row['student_reg'],
                 is_active=True
             ).first()
-            
+
             if not student:
-                self.skipped_count += 1
-                self.errors.append(f"Row {row_number}: Student '{row['student_reg']}' not found")
-                return
-            
-            # Look up class
+                raise ValueError(f"Student '{row['student_reg']}' not found")
+
+            # =========================
+            # FIX 8: Class lookup
+            # =========================
             class_obj = Class.objects.filter(
                 class_code=row['class_code'],
                 is_active=True
             ).first()
-            
+
             if not class_obj:
-                self.skipped_count += 1
-                self.errors.append(f"Row {row_number}: Class '{row['class_code']}' not found")
-                return
-            
-            # Build scan time
+                raise ValueError(f"Class '{row['class_code']}' not found")
+
+            # =========================
+            # FIX 9: Safe datetime build
+            # =========================
             scan_date = row['date']
-            scan_time = row.get('time', datetime.now().time())
-            scan_datetime = datetime.combine(scan_date.date(), scan_time) if hasattr(scan_date, 'date') else scan_date
-            
+            scan_time = row.get('time')
+
+            # Handle missing/NaN time
+            if pd.isna(scan_time):
+                scan_time = datetime.now().time()
+
+            # Normalize date
+            if hasattr(scan_date, "date"):
+                date_only = scan_date.date()
+            else:
+                date_only = scan_date
+
+            scan_datetime = datetime.combine(date_only, scan_time)
+
+            # Ensure timezone-aware
             if timezone.is_naive(scan_datetime):
                 scan_datetime = timezone.make_aware(scan_datetime)
-            
-            # Check for duplicate
+
+            # =========================
+            # FIX 10: Duplicate check
+            # =========================
             existing = ClassAttendance.objects.filter(
                 student=student,
                 class_obj=class_obj,
                 scan_time__date=scan_datetime.date()
             ).exists()
-            
+
             if existing:
-                self.skipped_count += 1
-                self.errors.append(f"Row {row_number}: Duplicate attendance for {student.student_reg_number} on {scan_datetime.date()}")
-                return
-            
-            # Create attendance record
+                raise ValueError(
+                    f"Duplicate attendance for {student.student_reg_number} "
+                    f"on {scan_datetime.date()}"
+                )
+
+            # =========================
+            # Verification method cleanup
+            # =========================
             verification_method = row.get('method', 'import')
             if verification_method not in ['qr', 'face', 'rfid', 'manual', 'import']:
                 verification_method = 'import'
-            
-            attendance = ClassAttendance.objects.create(
+
+            # =========================
+            # Create attendance record
+            # =========================
+            ClassAttendance.objects.create(
                 student=student,
                 class_obj=class_obj,
                 scan_time=scan_datetime,
@@ -622,12 +657,21 @@ class AttendanceImportService:
                 verification_status=row['status'],
                 remarks=row.get('remarks', f'Imported from Excel - Row {row_number}')
             )
-            
+
             self.imported_count += 1
-            
+
         except Exception as e:
             self.skipped_count += 1
             self.errors.append(f"Row {row_number}: {str(e)}")
+
+            self.error_rows.append({
+                "row": row_number,
+                "student_reg": row.get("student_reg"),
+                "class_code": row.get("class_code"),
+                "date": row.get("date"),
+                "status": row.get("status"),
+                "error": str(e)
+            })
     
     @staticmethod
     def download_template():
@@ -689,6 +733,48 @@ class AttendanceImportService:
         wb.save(output)
         output.seek(0)
         
+        return output
+    
+    def generate_error_report(self):
+        """
+        Generate Excel file containing failed import rows
+        """
+        import io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Import Errors"
+
+        headers = ["Row", "Student Reg", "Class Code", "Date", "Status", "Error"]
+
+        # Header styling
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="D9534F", end_color="D9534F", fill_type="solid")
+
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+
+        # Data rows
+        for i, err in enumerate(self.error_rows, 2):
+            ws.cell(row=i, column=1, value=err["row"])
+            ws.cell(row=i, column=2, value=err.get("student_reg"))
+            ws.cell(row=i, column=3, value=err.get("class_code"))
+            ws.cell(row=i, column=4, value=str(err.get("date")))
+            ws.cell(row=i, column=5, value=err.get("status"))
+            ws.cell(row=i, column=6, value=err.get("error"))
+
+        # Auto width (simple version)
+        for col in range(1, 7):
+            ws.column_dimensions[chr(64 + col)].width = 20
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
         return output
 
 

@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect
 
@@ -70,6 +70,7 @@ urlpatterns = [
     path('devices/', include('apps.firmware.urls')),
     path('users/', include('apps.users.urls')),
     path('notifications/', include('apps.notifications.urls')),
+    path('ocr/', include('apps.ocr.urls')),
     
 
     # API & Docs
@@ -85,6 +86,8 @@ urlpatterns = [
         name="schema-swagger-ui"
     ),
 
+    path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
+    path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
 
     # Redirect root to login
     # path('', lambda request: redirect('verify:login'), name='root_redirect'),

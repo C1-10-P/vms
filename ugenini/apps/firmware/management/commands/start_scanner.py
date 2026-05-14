@@ -74,6 +74,6 @@ class Command(BaseCommand):
     def _display_result(self, result):
         """Display scan result"""
         if result.get('success'):
-            self.stdout.write(self.style.SUCCESS(f"✅ {result.get('message', 'Success')}"))
+            self.stdout.write(self.style.SUCCESS(f" {result.get('message', 'Success')}"))
         else:
-            self.stdout.write(self.style.ERROR(f"❌ {result.get('error', 'Failed')}"))
+            self.stdout.write(self.style.ERROR(f" {result.get('error', 'Failed')}"))

@@ -22,40 +22,78 @@ class OCRProcessIDView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
     def post(self, request):
-        # Get image from request
-        image = None
-        if 'image' in request.FILES:
-            image = request.FILES['image'].read()
-        elif 'image_base64' in request.data:
-            image = request.data['image_base64']
-        else:
+
+        image = request.data.get('image_base64')
+
+        class_code = request.data.get('class_code')
+
+        engine = request.data.get('engine', 'easyocr')
+
+        debug = request.data.get('debug', False)
+
+        if not image:
+            return Response(
+                {'error': 'Image required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Process OCR
+        result = ocr_service.process_id_image(
+            image,
+            'student',
+            engine
+        )
+
+        if not result['success']:
+            return Response(
+                result,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Optional confidence validation
+        if result.get('confidence', 0) < 40:
             return Response({
                 'success': False,
-                'error': 'No image provided. Please upload an image file or base64 data.'
+                'error': 'Image quality too low. Please retake the photo.',
+                'confidence': result.get('confidence', 0),
+                'raw_text': result.get('raw_text', '')
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get parameters
-        id_type = request.data.get('id_type', 'auto')  # auto, student, national, visitor
-        action = request.data.get('action', 'extract')  # extract, attendance, visitor_checkin
-        
-        # Process image with OCR
-        result = ocr_service.process_id_image(image, id_type)
-        
-        if not result['success']:
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Perform action based on parameter
-        if action == 'attendance':
-            # Record attendance for student
-            attendance_result = self._process_attendance(result['extracted_data'])
-            result['attendance'] = attendance_result
-            
-        elif action == 'visitor_checkin':
-            # Check in visitor
-            visitor_result = self._process_visitor_checkin(result['extracted_data'])
-            result['visitor_checkin'] = visitor_result
-        
-        return Response(result, status=status.HTTP_200_OK)
+
+        # Debug mode
+        if debug:
+            result['debug'] = {
+                'raw_text': result.get('raw_text'),
+                'detected_type': result.get('id_type'),
+                'confidence': result.get('confidence')
+            }
+
+        # Get registration number
+        student_reg = result['extracted_data'].get(
+            'registration_number'
+        )
+
+        if not student_reg:
+            return Response({
+                'success': False,
+                'error': 'Could not extract registration number from ID'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Record attendance
+        service = AttendanceService()
+
+        attendance_result = service.process_api_check_in(
+            student_reg,
+            class_code,
+            'ocr_scanner'
+        )
+
+        return Response({
+            'success': attendance_result.get('success', False),
+            'student': result['extracted_data'],
+            'attendance': attendance_result,
+            'confidence': result['confidence'],
+            'debug': result.get('debug')
+        })
     
     def _process_attendance(self, extracted_data):
         """Process attendance using extracted student data"""
@@ -145,40 +183,82 @@ class OCRScanVisitorView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
+
         image = request.data.get('image_base64')
-        
+
+        engine = request.data.get('engine', 'easyocr')
+
+        debug = request.data.get('debug', False)
+
         if not image:
-            return Response({'error': 'Image required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {'error': 'Image required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Process OCR
-        result = ocr_service.process_id_image(image, 'auto')
-        
+        result = ocr_service.process_id_image(
+            image,
+            'auto',
+            engine
+        )
+
         if not result['success']:
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                result,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Optional confidence validation
+        if result.get('confidence', 0) < 40:
+            return Response({
+                'success': False,
+                'error': 'Image quality too low. Please retake the photo.',
+                'confidence': result.get('confidence', 0),
+                'raw_text': result.get('raw_text', '')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Debug mode
+        if debug:
+            result['debug'] = {
+                'raw_text': result.get('raw_text'),
+                'detected_type': result.get('id_type'),
+                'confidence': result.get('confidence')
+            }
+
         # Check if person exists
         id_number = result['extracted_data'].get('id_number')
         person = None
-        
+
         if id_number:
-            person = Person.objects.filter(national_id=id_number).first()
-        
+            person = Person.objects.filter(
+                national_id=id_number
+            ).first()
+
         if person and person.person_type == 'visitor':
-            # Existing visitor
-            visitor = Visitor.objects.filter(person=person).first()
+
+            visitor = Visitor.objects.filter(
+                person=person
+            ).first()
+
             if visitor:
+                # service = VisitorService()
+                # result = service.process_visitor_checkin()
                 visitor.start_new_visit()
+
                 return Response({
                     'success': True,
                     'visitor_id': visitor.id,
                     'name': person.full_name,
-                    'message': 'Welcome back! Check-in successful.'
+                    'message': 'Welcome back! Check-in successful.',
+                    'debug': result.get('debug')
                 })
-        
-        # New visitor - need additional info
+
+        # New visitor
         return Response({
             'success': False,
             'requires_manual_entry': True,
             'extracted_data': result['extracted_data'],
-            'message': 'Please provide additional visitor information'
+            'message': 'Please provide additional visitor information',
+            'debug': result.get('debug')
         }, status=status.HTTP_202_ACCEPTED)

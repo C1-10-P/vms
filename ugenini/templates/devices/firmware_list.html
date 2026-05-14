@@ -291,15 +291,15 @@
                                                     <i class="bx bx-chip me-2 text-primary"></i>
                                                     <strong>{{ fw.version }}</strong>
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 <span class="badge bg-label-secondary">{{ fw.get_node_type_display }}</span>
-                                            </td
+                                            </td>
                                             <td>
                                                 <span class="stability-badge stability-{{ fw.stability }}">
                                                     {{ fw.get_stability_display }}
                                                 </span>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div>
                                                     <small>{{ fw.release_date|date:"Y-m-d H:i" }}</small>
@@ -307,14 +307,14 @@
                                                     <span class="badge bg-success ms-1">New</span>
                                                     {% endif %}
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div>
                                                     <small class="text-muted">Success: {{ fw.successful_updates }}</small>
                                                     <br>
                                                     <small class="text-danger">Failed: {{ fw.failed_updates }}</small>
                                                 </div>
-                                            </td
+                                            </td>
                                             <td>
                                                 <div class="dropdown">
                                                     <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -340,7 +340,7 @@
                                                         {% endif %}
                                                     </div>
                                                 </div>
-                                            </td
+                                            </td>
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -348,7 +348,7 @@
                                                 <i class="bx bx-chip bx-lg text-muted mb-3 d-block"></i>
                                                 <h6 class="text-muted">No firmware versions found</h6>
                                                 <p class="text-muted small">Click "Upload Firmware" to add a new version</p>
-                                            </td
+                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -392,17 +392,7 @@
                         </div>
                     </div>
 
-                    <footer class="content-footer footer bg-footer-theme">
-                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-                            <div class="mb-2 mb-md-0">
-                                © <script>document.write(new Date().getFullYear());</script> Ugenini VMS
-                            </div>
-                            <div>
-                                <a href="#" class="footer-link me-4" target="_blank">Terms</a>
-                                <a href="#" target="_blank" class="footer-link fw-bolder">Privacy</a>
-                            </div>
-                        </div>
-                    </footer>
+                    {% include 'includes/footer.html' %}
                 </div>
             </div>
         </div>
